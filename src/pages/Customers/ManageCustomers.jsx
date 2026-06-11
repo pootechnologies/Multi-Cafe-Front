@@ -1,0 +1,536 @@
+import React, { useEffect, useState } from "react";
+import toast from "react-hot-toast";
+import { useForm } from "react-hook-form";
+import { Button } from "@/components/ui/button";
+import { t } from "i18next";
+import { Plus, Eye, Pencil, Trash2, ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Hash, User, Search, Users } from "lucide-react";
+import axiosInstance from "@/utils/axiosInstance";
+import { API_ENDPOINTS } from "@/utils/apiConfig";
+
+const PAGE_SIZE = 10; // match your backend page size
+
+const ManageCustomer = () => {
+  const [selectedCustomer, setSelectedCustomer] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isViewModalOpen, setIsViewModalOpen] = useState(false);
+  const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+  const [customerToDelete, setCustomerToDelete] = useState(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [isVisible, setIsVisible] = useState(false);
+  const [expandedCards, setExpandedCards] = useState({});
+  const [customers, setCustomers] = useState({
+    count: 0,
+    next: null,
+    previous: null,
+    results: [],
+  });
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    reset,
+    formState: { errors },
+  } = useForm();
+
+  const fetchCustomers = async (pageNum = 1, query = "") => {
+    try {
+      const url = query
+        ? `${API_ENDPOINTS.CUSTOMERS}?page=${pageNum}&search=${query}`
+        : `${API_ENDPOINTS.CUSTOMERS}?page=${pageNum}`;
+      const response = await axiosInstance.get(url); // Replace axios with axiosInstance
+      setCustomers(response.data);
+    } catch (error) {
+      console.error("Error fetching customers:", error);
+      toast.error("Failed to load customers");
+    }
+  };
+
+  useEffect(() => {
+    fetchCustomers(page, searchQuery);
+  }, [page, searchQuery]);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        setIsVisible(true);
+      } else {
+        setIsVisible(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleSearchChange = (event) => {
+    setSearchQuery(event.target.value);
+    setPage(1);
+  };
+
+  const handleViewClick = (customer) => {
+    setSelectedCustomer(customer);
+    setIsViewModalOpen(true);
+  };
+
+  const closeViewModal = () => {
+    setIsViewModalOpen(false);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const handleDeleteClick = (customer) => {
+    setCustomerToDelete(customer);
+    setIsConfirmDeleteOpen(true);
+  };
+
+  const closeConfirmDelete = () => {
+    setIsConfirmDeleteOpen(false);
+  };
+
+  const deleteCustomer = async () => {
+    if (!customerToDelete) return;
+    try {
+      await axiosInstance.delete( // Replace axios with axiosInstance
+        `${API_ENDPOINTS.CUSTOMERS}/${customerToDelete.id}`
+      );
+      toast.success("Customer deleted successfully!");
+      closeConfirmDelete();
+      fetchCustomers(page, searchQuery);
+    } catch (error) {
+      console.error("Error deleting customer:", error);
+      toast.error("Failed to delete customer!");
+      closeConfirmDelete();
+    }
+  };
+
+  const handleUpdateClick = (customer) => {
+    setSelectedCustomer(customer);
+    setIsUpdateModalOpen(true);
+  };
+
+  const handleUpdateSubmit = async (data) => {
+    try {
+      await axiosInstance.put( // Replace axios with axiosInstance
+        `${API_ENDPOINTS.CUSTOMERS}/${selectedCustomer.id}`,
+        data
+      );
+      toast.success("Customer updated successfully!");
+      setIsUpdateModalOpen(false);
+      fetchCustomers(page, searchQuery);
+    } catch (error) {
+      console.error("Error updating customer:", error);
+      toast.error("Failed to update customer!");
+    }
+  };
+
+  const openAddModal = () => {
+    reset({
+      name: "",
+      phone: "",
+      tin_number: "",
+      vat_number: "",
+      fs_number: "",
+      zone: "",
+      city: "",
+      sub_city: "",
+    });
+    setIsModalOpen(true);
+  };
+
+  const handleNewCustomerSubmit = async (data) => {
+    try {
+      const response = await axiosInstance.post( // Replace axios with axiosInstance
+        `${API_ENDPOINTS.CUSTOMERS}`,
+        data
+      );
+      if (response.status === 201) {
+        toast.success("Customer added successfully!");
+        closeModal();
+        fetchCustomers(page, searchQuery);
+      } else {
+        toast.error("Failed to add customer.");
+      }
+    } catch (error) {
+      console.error("Error adding customer:", error);
+      toast.error("An error occurred while adding the customer.");
+    }
+  };
+
+  const totalPages = Math.ceil(customers.count / PAGE_SIZE);
+  const handlePageChange = (event, value) => {
+    setPage(value);
+  };
+
+  // --- Rest of the component remains unchanged ---
+  // (ViewModal, CustomerModal, ConfirmDeleteModal, UpdateModal, columns, rows, and return JSX)
+  // ...
+
+  const ViewModal = ({ customer, onClose }) => {
+    if (!customer) return null;
+    const fields = [
+      { label: t("name"), value: customer.name },
+      { label: t("phone"), value: customer.phone },
+      { label: t("tin_number"), value: customer.tin_number },
+      { label: t("vat_number"), value: customer.vat_number },
+      { label: t("fs_number"), value: customer.fs_number },
+      { label: t("zone"), value: customer.zone },
+      { label: t("city"), value: customer.city },
+      { label: t("sub_city"), value: customer.sub_city },
+    ];
+    return (
+      <div className="fixed inset-0 z-[100] flex items-start md:items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+        <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/60 dark:border-slate-800 overflow-hidden flex flex-col mt-6 md:mt-0 max-h-[calc(100vh-180px)] md:max-h-[85vh]" onClick={e => e.stopPropagation()}>
+          <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-blue-50 dark:bg-blue-900/30 flex items-center justify-center text-blue-600 dark:text-blue-400"><Eye className="h-5 w-5" /></div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t("customer_details")}</h2>
+            </div>
+          </div>
+          <div className="p-6 space-y-3 flex-1 overflow-y-auto custom-scrollbar">
+            {fields.map((f, i) => (
+              <div key={i} className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-700">
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1">{f.label}</p>
+                <p className="font-semibold text-slate-900 dark:text-slate-100">{f.value || "N/A"}</p>
+              </div>
+            ))}
+          </div>
+          <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end">
+            <Button onClick={onClose} className="rounded-xl bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 text-white px-6">{t("close")}</Button>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  const CustomerModal = ({ isOpen, onClose, onSubmit }) => {
+    if (!isOpen) return null;
+    const inputClass = "w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all";
+    return (
+      <div className="fixed inset-0 z-[100] flex items-start md:items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+        <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/60 dark:border-slate-800 overflow-hidden flex flex-col mt-6 md:mt-0 max-h-[calc(100vh-180px)] md:max-h-[85vh]" onClick={e => e.stopPropagation()}>
+          <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400"><Plus className="h-5 w-5" /></div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t("add_new_customers")}</h2>
+            </div>
+          </div>
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto custom-scrollbar">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("customer_name")}</label>
+                <input type="text" {...register("name", { required: true })} className={`${inputClass} ${errors.name ? "border-rose-400 dark:border-rose-500" : ""}`} />
+                {errors.name && <p className="mt-2 text-sm text-rose-500">{t("customer_name_required")}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("phone")}</label>
+                <input type="tel" {...register("phone")} className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("tin_number")}</label>
+                <input type="text" {...register("tin_number")} className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("vat_number")}</label>
+                <input type="text" {...register("vat_number")} className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("fs_number")}</label>
+                <input type="text" {...register("fs_number")} className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("zone")}</label>
+                <input type="text" {...register("zone")} className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("city")}</label>
+                <input type="text" {...register("city")} className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("sub_city")}</label>
+                <input type="text" {...register("sub_city")} className={inputClass} />
+              </div>
+            </div>
+            <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end gap-3">
+              <Button type="button" onClick={onClose} className="rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 px-6">{t("cancel")}</Button>
+              <Button type="submit" className="rounded-xl bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 text-white px-6">{t("save")}</Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
+  const ConfirmDeleteModal = ({ onConfirm, onCancel }) => (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onCancel}>
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/60 dark:border-slate-800 overflow-hidden" onClick={e => e.stopPropagation()}>
+        <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center text-rose-600 dark:text-rose-400"><Trash2 className="h-5 w-5" /></div>
+            <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t("are_you_sure")}</h2>
+          </div>
+        </div>
+        <div className="p-6"><p className="text-slate-600 dark:text-slate-400">{t("sure_discription_customer")}</p></div>
+        <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end gap-3">
+          <Button onClick={onCancel} className="rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 px-6">{t("cancel")}</Button>
+          <Button onClick={onConfirm} className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white px-6">{t("delete")}</Button>
+        </div>
+      </div>
+    </div>
+  );
+
+  const UpdateModal = ({ onClose, onSubmit, defaultValues }) => {
+    const {
+      register,
+      handleSubmit,
+      reset,
+      formState: { errors },
+    } = useForm({ defaultValues });
+    useEffect(() => {
+      if (defaultValues) {
+        reset(defaultValues);
+      }
+    }, [defaultValues, reset]);
+    const inputClass = "w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all";
+    return (
+      <div className="fixed inset-0 z-[100] flex items-start md:items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+        <div className="relative w-full max-w-2xl bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/60 dark:border-slate-800 overflow-hidden flex flex-col mt-6 md:mt-0 max-h-[calc(100vh-180px)] md:max-h-[85vh]" onClick={e => e.stopPropagation()}>
+          <div className="p-6 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-xl bg-amber-50 dark:bg-amber-900/30 flex items-center justify-center text-amber-600 dark:text-amber-400"><Pencil className="h-5 w-5" /></div>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">{t("update_customer")}</h2>
+            </div>
+          </div>
+          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+            <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4 overflow-y-auto custom-scrollbar">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("name")}</label>
+                <input type="text" {...register("name", { required: true })} className={`${inputClass} ${errors.name ? "border-rose-400 dark:border-rose-500" : ""}`} />
+                {errors.name && <p className="mt-2 text-sm text-rose-500">{t("customer_name_is_required")}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("phone")}</label>
+                <input type="tel" {...register("phone")} className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("tin_number")}</label>
+                <input type="text" {...register("tin_number")} className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("vat_number")}</label>
+                <input type="text" {...register("vat_number")} className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("fs_number")}</label>
+                <input type="text" {...register("fs_number")} className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("zone")}</label>
+                <input type="text" {...register("zone")} className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("city")}</label>
+                <input type="text" {...register("city")} className={inputClass} />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">{t("sub_city")}</label>
+                <input type="text" {...register("sub_city")} className={inputClass} />
+              </div>
+            </div>
+            <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end gap-3">
+              <Button type="button" onClick={onClose} className="rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 px-6">{t("cancel")}</Button>
+              <Button type="submit" className="rounded-xl bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 text-white px-6">{t("update")}</Button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
+  const displayCustomers = customers.results || [];
+
+  return (
+    <div className="px-5 mt-10 md:mt-0 min-h-[calc(100vh-4rem)] bg-slate-50/30 dark:bg-background md:p-8 lg:p-12 relative overflow-hidden animate-in fade-in slide-in-from-bottom-6 duration-700">
+      <div className="w-full mx-auto space-y-8">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-2">
+          <div className="space-y-2">
+            <h1 className="text-2xl md:text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-slate-900 via-slate-800 to-slate-700 dark:from-slate-100 dark:via-slate-200 dark:to-slate-300 tracking-tight">{t("manage_customers")}</h1>
+            <p className="text-slate-500 dark:text-slate-400 text-base max-w-xl leading-relaxed">View, search, and manage all your customers.</p>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+            <div className="relative flex items-center gap-2 bg-white/80 dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200/60 dark:border-slate-800 rounded-xl px-3 h-12 shadow-sm w-full sm:w-fit">
+              <Search className="h-4 w-4 text-slate-400 shrink-0" />
+              <input type="search" placeholder={t("search_customers")} value={searchQuery} onChange={handleSearchChange} className="flex-1 sm:w-[180px] bg-transparent border-0 outline-none text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 h-8" />
+            </div>
+            <Button onClick={openAddModal} className="bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 rounded-xl h-12 px-6 font-semibold">
+              <Plus className="h-5 w-5" /> {t("add_customers")}
+            </Button>
+          </div>
+        </div>
+
+        {/* Desktop Table */}
+        <div className="hidden md:block bg-white/80 dark:bg-slate-900/50 backdrop-blur-xl rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.02)] border border-slate-200/60 dark:border-slate-800 overflow-hidden relative">
+          <div className="overflow-x-auto min-h-[400px]">
+            <table className="w-full">
+              <thead className="bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-100/80 dark:border-slate-800">
+                <tr>
+                  <th className="text-left font-semibold text-slate-600 dark:text-slate-400 h-14 pl-8 text-sm">ID</th>
+                  <th className="text-left font-semibold text-slate-600 dark:text-slate-400 h-14 text-sm">CUSTOMER NAME</th>
+                  <th className="text-left font-semibold text-slate-600 dark:text-slate-400 h-14 text-sm">PHONE</th>
+                  <th className="text-left font-semibold text-slate-600 dark:text-slate-400 h-14 text-sm">TIN NUMBER</th>
+                  <th className="text-left font-semibold text-slate-600 dark:text-slate-400 h-14 text-sm">VAT NUMBER</th>
+                  <th className="text-left font-semibold text-slate-600 dark:text-slate-400 h-14 text-sm">CREATED BY</th>
+                  <th className="text-right font-semibold text-slate-600 dark:text-slate-400 h-14 pr-8 text-sm">ACTIONS</th>
+                </tr>
+              </thead>
+              <tbody>
+                {displayCustomers.length === 0 ? (
+                  <tr><td colSpan={7} className="h-96">
+                    <div className="flex flex-col items-center justify-center text-center h-full space-y-4">
+                      <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/30 text-blue-500 dark:text-blue-400 rounded-full flex items-center justify-center mb-2 shadow-sm border border-blue-100 dark:border-blue-900/50"><Users className="h-10 w-10 opacity-80" /></div>
+                      <div>
+                        <p className="text-xl font-semibold text-slate-900 dark:text-slate-100">No customers found</p>
+                        <p className="text-slate-500 dark:text-slate-400 mt-2 max-w-sm mx-auto">Get started by adding a new customer.</p>
+                      </div>
+                      <Button onClick={openAddModal} className="mt-4 rounded-xl font-medium border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm transition-colors"><Plus className="h-4 w-4 mr-2" /> Add Customer</Button>
+                    </div>
+                  </td></tr>
+                ) : (
+                  displayCustomers.map((customer) => (
+                    <tr key={customer.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors group h-20">
+                      <td className="py-4 pl-8"><span className="inline-flex items-center px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-sm border border-slate-200/60 dark:border-slate-700/60 shadow-sm"><Hash className="h-3.5 w-3.5 mr-1 text-slate-400" />{customer.id}</span></td>
+                      <td className="py-4"><div className="flex items-center gap-3"><div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover:bg-white dark:group-hover:bg-slate-750 group-hover:border-blue-100 dark:group-hover:border-blue-900 group-hover:text-blue-600 transition-colors shadow-sm"><Users className="h-4 w-4" /></div><span className="font-semibold text-slate-900 dark:text-slate-100">{customer.name}</span></div></td>
+                      <td className="py-4"><span className="text-slate-600 dark:text-slate-300 text-sm">{customer.phone || "N/A"}</span></td>
+                      <td className="py-4"><span className="text-slate-600 dark:text-slate-300 text-sm">{customer.tin_number || "N/A"}</span></td>
+                      <td className="py-4"><span className="text-slate-600 dark:text-slate-300 text-sm">{customer.vat_number || "N/A"}</span></td>
+                      <td className="py-4"><div className="flex items-center gap-2"><div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 shadow-sm"><User className="h-3.5 w-3.5" /></div><span className="text-slate-600 dark:text-slate-300 text-sm">{customer.user}</span></div></td>
+                      <td className="py-4 pr-8 text-right"><div className="flex justify-end gap-2">
+                        <button onClick={() => handleViewClick(customer)} className="h-10 w-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 dark:hover:border-blue-800 shadow-sm transition-all flex items-center justify-center" title={t("view")}><Eye className="h-4 w-4" /></button>
+                        <button onClick={() => handleUpdateClick(customer)} className="h-10 w-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:border-amber-200 dark:hover:border-amber-800 shadow-sm transition-all flex items-center justify-center" title={t("update")}><Pencil className="h-4 w-4" /></button>
+                        <button onClick={() => handleDeleteClick(customer)} className="h-10 w-10 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 hover:border-rose-200 dark:hover:border-rose-800 shadow-sm transition-all flex items-center justify-center" title={t("delete")}><Trash2 className="h-4 w-4" /></button>
+                      </div></td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+          {displayCustomers.length > 0 && (
+            <div className="bg-slate-50/50 dark:bg-slate-900/50 border-t border-slate-100/80 dark:border-slate-800 px-8 py-4 text-sm flex flex-col sm:flex-row justify-between items-center gap-4 rounded-b-[24px]">
+              <span className="text-slate-500 dark:text-slate-400">Showing <span className="font-semibold text-slate-700 dark:text-slate-200">{displayCustomers.length}</span> of <span className="font-semibold text-slate-700 dark:text-slate-200">{customers.count}</span> customers</span>
+              <div className="flex items-center gap-2">
+                <Button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="h-8 rounded-lg shadow-sm font-medium bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 px-3 text-sm"><ChevronLeft className="h-4 w-4 mr-1" /> Previous</Button>
+                <span className="text-slate-600 dark:text-slate-400 font-medium px-2">Page {page} of {totalPages || 1}</span>
+                <Button onClick={() => setPage(p => (!totalPages || p >= totalPages ? p : p + 1))} disabled={!totalPages || page >= totalPages} className="h-8 rounded-lg shadow-sm font-medium bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 px-3 text-sm">Next <ChevronRight className="h-4 w-4 ml-1" /></Button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile View - Cards */}
+        {/* Mobile Cards */}
+        <div className="md:hidden space-y-4">
+          {displayCustomers.length === 0 ? (
+            <div className="bg-white/80 dark:bg-slate-900/50 backdrop-blur-xl rounded-[24px] shadow-sm border border-slate-200/60 dark:border-slate-800 p-8 text-center flex flex-col items-center">
+              <div className="w-16 h-16 bg-blue-50 dark:bg-blue-900/20 text-blue-500 dark:text-blue-400 rounded-full flex items-center justify-center mb-4 border border-blue-100 dark:border-blue-900/50"><Users className="h-8 w-8 opacity-80" /></div>
+              <p className="text-lg font-semibold text-slate-900 dark:text-slate-100">No customers found</p>
+              <p className="text-slate-500 dark:text-slate-400 mt-2 mb-6 text-sm">Add a new customer to get started.</p>
+              <Button onClick={openAddModal} className="w-full rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"><Plus className="h-4 w-4 mr-2" /> Add Customer</Button>
+            </div>
+          ) : (
+            displayCustomers.map((customer) => (
+              <div key={customer.id} className="bg-white/90 dark:bg-slate-900/80 backdrop-blur-lg rounded-[20px] shadow-sm border border-slate-200/60 dark:border-slate-800 p-5 relative group transition-shadow hover:shadow-md">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 shadow-sm"><Users className="h-6 w-6" /></div>
+                    <div>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider mb-0.5">Customer</p>
+                      <p className="font-bold text-slate-900 dark:text-slate-100 text-lg leading-none">{customer.name}</p>
+                    </div>
+                  </div>
+                  <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-xs border border-slate-200/60 dark:border-slate-700/60 shadow-sm"><Hash className="h-3 w-3 mr-1 text-slate-400" />{customer.id}</span>
+                </div>
+                <div className="mb-4 space-y-2">
+                  <div className="bg-slate-50/50 dark:bg-slate-950/50 rounded-xl p-3 border border-slate-100/50 dark:border-slate-800/50">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1">{t("phone")}</p>
+                    <p className="font-semibold text-slate-800 dark:text-slate-200">{customer.phone || "N/A"}</p>
+                  </div>
+                  <div className="bg-slate-50/50 dark:bg-slate-950/50 rounded-xl p-3 border border-slate-100/50 dark:border-slate-800/50">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1">{t("tin_number")}</p>
+                    <p className="font-semibold text-slate-800 dark:text-slate-200">{customer.tin_number || "N/A"}</p>
+                  </div>
+                </div>
+                {expandedCards[customer.id] && (
+                  <div className="mb-4 space-y-2">
+                    <div className="bg-slate-50/50 dark:bg-slate-950/50 rounded-xl p-3 border border-slate-100/50 dark:border-slate-800/50">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1">{t("vat_number")}</p>
+                      <p className="font-semibold text-slate-800 dark:text-slate-200">{customer.vat_number || "N/A"}</p>
+                    </div>
+                    <div className="bg-slate-50/50 dark:bg-slate-950/50 rounded-xl p-3 border border-slate-100/50 dark:border-slate-800/50">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1">{t("fs_number")}</p>
+                      <p className="font-semibold text-slate-800 dark:text-slate-200">{customer.fs_number || "N/A"}</p>
+                    </div>
+                    <div className="bg-slate-50/50 dark:bg-slate-950/50 rounded-xl p-3 border border-slate-100/50 dark:border-slate-800/50">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1">{t("zone")} / {t("city")} / {t("sub_city")}</p>
+                      <p className="font-semibold text-slate-800 dark:text-slate-200">{customer.zone || "N/A"} / {customer.city || "N/A"} / {customer.sub_city || "N/A"}</p>
+                    </div>
+                    <div className="bg-slate-50/50 dark:bg-slate-950/50 rounded-xl p-3 border border-slate-100/50 dark:border-slate-800/50">
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1">{t("created_by")}</p>
+                      <p className="font-semibold text-slate-800 dark:text-slate-200 flex items-center"><User className="h-3 w-3 mr-1.5 text-slate-400" />{customer.user || "N/A"}</p>
+                    </div>
+                  </div>
+                )}
+                <button onClick={() => setExpandedCards(prev => { const ex = prev[customer.id]; return ex ? {} : { [customer.id]: true }; })} className="w-full mb-3 flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+                  {expandedCards[customer.id] ? (<><span>Hide Details</span><ChevronUp className="h-3.5 w-3.5" /></>) : (<><span>Show Details</span><ChevronDown className="h-3.5 w-3.5" /></>)}
+                </button>
+                <div className="flex justify-end gap-2 pt-2 border-t border-slate-100/80 dark:border-slate-800">
+                  <button onClick={() => handleViewClick(customer)} className="flex-1 rounded-lg text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 bg-slate-50 dark:bg-slate-800/50 py-2 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors"><Eye className="h-4 w-4" /> {t("view")}</button>
+                  <button onClick={() => handleUpdateClick(customer)} className="flex-1 rounded-lg text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 bg-slate-50 dark:bg-slate-800/50 py-2 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors"><Pencil className="h-4 w-4" /> {t("update")}</button>
+                  <button onClick={() => handleDeleteClick(customer)} className="flex-1 rounded-lg text-slate-600 dark:text-slate-400 hover:text-rose-600 dark:hover:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-900/20 bg-slate-50 dark:bg-slate-800/50 py-2 text-sm font-medium flex items-center justify-center gap-1.5 transition-colors"><Trash2 className="h-4 w-4" /> {t("delete")}</button>
+                </div>
+              </div>
+            ))
+          )}
+          {displayCustomers.length > 0 && (
+            <div className="flex flex-col items-center gap-3 pt-2 pb-4">
+              <span className="text-xs text-slate-400 dark:text-slate-500">Showing {displayCustomers.length} of {customers.count} customers</span>
+              <div className="flex items-center gap-2">
+                <Button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="h-8 rounded-lg shadow-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 px-2"><ChevronLeft className="h-4 w-4" /></Button>
+                <span className="text-slate-600 dark:text-slate-400 text-sm font-medium px-2">Page {page} of {totalPages || 1}</span>
+                <Button onClick={() => setPage(p => (!totalPages || p >= totalPages ? p : p + 1))} disabled={!totalPages || page >= totalPages} className="h-8 rounded-lg shadow-sm bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 px-2"><ChevronRight className="h-4 w-4" /></Button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Modals */}
+      <CustomerModal isOpen={isModalOpen} onClose={closeModal} onSubmit={handleNewCustomerSubmit} />
+      {isViewModalOpen && selectedCustomer && (<ViewModal customer={selectedCustomer} onClose={closeViewModal} />)}
+      {isConfirmDeleteOpen && (<ConfirmDeleteModal onConfirm={deleteCustomer} onCancel={closeConfirmDelete} />)}
+      {isUpdateModalOpen && (<UpdateModal onClose={() => setIsUpdateModalOpen(false)} onSubmit={handleUpdateSubmit} defaultValues={selectedCustomer} />)}
+
+      {isVisible && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-24 left-6 h-12 w-12 rounded-full bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 border border-white/20 dark:border-black/20"
+        >
+          <ChevronUp className="h-6 w-6 group-hover:scale-125 transition-transform" />
+        </button>
+      )}
+    </div>
+  );
+};
+
+export default ManageCustomer;
+
