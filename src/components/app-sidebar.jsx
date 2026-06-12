@@ -8,7 +8,8 @@ import {
   Lightbulb,
   Utensils,
   DollarSign,
-  Coffee
+  Coffee,
+  Shield
 } from "lucide-react";
 import { NavMain } from "@/components/ui/nav-main";
 import { NavUser } from "@/components/ui/nav-user";
@@ -94,7 +95,10 @@ const data = {
       title: "users",
       url: "#",
       icon: Users,
-      items: [{ title: "manage_users", url: "/manage_users" }],
+      items: [
+        { title: "manage_users", url: "/manage_users" },
+        { title: "permissions", url: "/permissions", icon: Shield },
+      ],
     }
   ],
 };
