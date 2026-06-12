@@ -2,12 +2,30 @@ import { useEffect, useState } from "react";
 import { Shield, ChevronUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import toast from "react-hot-toast";
+import axiosInstance from "@/utils/axiosInstance";
+import { API_ENDPOINTS } from "@/utils/apiConfig";
+import CreatableSelect from "react-select/creatable";
 
 const Permissions = () => {
   const [availablePermissions, setAvailablePermissions] = useState([]);
   const [selectedPermissions, setSelectedPermissions] = useState([]);
   const [isVisible, setIsVisible] = useState(false);
   const [groupName, setGroupName] = useState("");
+  const [groups, setGroups] = useState([]);
+  const [selectedGroupId, setSelectedGroupId] = useState(null);
+  const [loadingGroups, setLoadingGroups] = useState(false);
+
+  const fetchGroups = async () => {
+    setLoadingGroups(true);
+    try {
+      const response = await axiosInstance.get(API_ENDPOINTS.TENANT_GROUPS);
+      setGroups(response.data?.results || []);
+    } catch (error) {
+      console.error("Failed to load tenant groups:", error);
+    } finally {
+      setLoadingGroups(false);
+    }
+  };
 
   useEffect(() => {
     fetch("/permissions.json")
@@ -17,6 +35,8 @@ const Permissions = () => {
         setAvailablePermissions([]);
         toast.error("Failed to load permissions.");
       });
+
+    fetchGroups();
 
     const handleScroll = () => setIsVisible(window.scrollY > 300);
     window.addEventListener("scroll", handleScroll);
@@ -46,8 +66,70 @@ const Permissions = () => {
     );
   };
 
-  const handleSave = () => {
-    toast.success(`${selectedPermissions.length} permission(s) saved!`);
+  const selectOptions = groups.map((g) => ({
+    label: g.name,
+    value: g.name,
+    id: g.id,
+    permissions: g.permissions || [],
+  }));
+
+  const handleGroupChange = (selectedOption) => {
+    if (selectedOption) {
+      setGroupName(selectedOption.value);
+      if (selectedOption.id) {
+        setSelectedGroupId(selectedOption.id);
+        setSelectedPermissions(selectedOption.permissions || []);
+      } else {
+        setSelectedGroupId(null);
+        setSelectedPermissions([]);
+      }
+    } else {
+      setGroupName("");
+      setSelectedGroupId(null);
+      setSelectedPermissions([]);
+    }
+  };
+
+  const handleCreateGroup = (inputValue) => {
+    const formattedVal = inputValue.length > 0 ? inputValue.charAt(0).toUpperCase() + inputValue.slice(1) : "";
+    setGroupName(formattedVal);
+    setSelectedGroupId(null);
+    setSelectedPermissions([]);
+  };
+
+  const handleSave = async () => {
+    if (!groupName.trim()) {
+      toast.error("Name is required");
+      return;
+    }
+    if (selectedPermissions.length === 0) {
+      toast.error("Permission is required");
+      return;
+    }
+
+    const payload = {
+      name: groupName,
+      permissions: selectedPermissions,
+    };
+
+    console.log(payload);
+
+    try {
+      if (selectedGroupId) {
+        await axiosInstance.patch(`${API_ENDPOINTS.TENANT_GROUPS}${selectedGroupId}/`, payload);
+        toast.success("Permission group updated successfully!");
+      } else {
+        await axiosInstance.post(API_ENDPOINTS.TENANT_GROUPS, payload);
+        toast.success("Permission group created successfully!");
+      }
+      setGroupName("");
+      setSelectedGroupId(null);
+      setSelectedPermissions([]);
+      fetchGroups();
+    } catch (error) {
+      console.error(error);
+      toast.error(error.response?.data?.message || "Failed to save permission group.");
+    }
   };
 
   return (
@@ -55,7 +137,7 @@ const Permissions = () => {
       <div className="w-full mx-auto space-y-8">
 
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-6 pb-2">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-2">
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
@@ -65,31 +147,35 @@ const Permissions = () => {
                 Permissions
               </h1>
             </div>
-            <p className="text-slate-500 dark:text-slate-400 text-base max-w-xl leading-relaxed">
+            <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base max-w-xl leading-relaxed">
               View and manage all available system permissions. Select the permissions you want to assign.
             </p>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-slate-500 dark:text-slate-400">
-              <span className="font-semibold text-emerald-600 dark:text-emerald-400">{selectedPermissions.length}</span> / {availablePermissions.length} selected
-            </span>
-            <button
-              type="button"
-              onClick={() => setSelectedPermissions([...availablePermissions])}
-              className="text-xs border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium transition-colors"
-            >
-              Select All
-            </button>
-            <button
-              type="button"
-              onClick={() => setSelectedPermissions([])}
-              className="text-xs border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium transition-colors"
-            >
-              Clear All
-            </button>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full lg:w-auto">
+            <div className="flex items-center justify-between sm:justify-start gap-4 w-full sm:w-auto">
+              <span className="text-sm text-slate-500 dark:text-slate-400 shrink-0">
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400">{selectedPermissions.length}</span> / {availablePermissions.length} selected
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedPermissions([...availablePermissions])}
+                  className="text-xs border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium transition-colors whitespace-nowrap"
+                >
+                  Select All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPermissions([])}
+                  className="text-xs border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium transition-colors whitespace-nowrap"
+                >
+                  Clear All
+                </button>
+              </div>
+            </div>
             <Button
               onClick={handleSave}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 rounded-xl h-10 px-6 font-semibold"
+              className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex items-center justify-center gap-2 rounded-xl h-10 px-6 font-semibold"
             >
               Save Permissions
             </Button>
@@ -97,26 +183,60 @@ const Permissions = () => {
         </div>
 
         {/* Groups Section */}
-        <div className="bg-white/80 dark:bg-slate-900/50 backdrop-blur-xl rounded-[20px] border border-slate-200/60 dark:border-slate-800 shadow-sm p-5">
+        <div className="bg-white/80 dark:bg-slate-900/50 backdrop-blur-xl rounded-[20px] border border-slate-200/60 dark:border-slate-800 shadow-sm p-5 relative z-40">
           <h2 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" />
             Groups
           </h2>
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 w-full">
             <label className="text-sm font-semibold text-slate-600 dark:text-slate-400 shrink-0" htmlFor="group-name">
               Name
             </label>
-            <input
-              id="group-name"
-              type="text"
-              value={groupName}
-              onChange={(e) => {
-                const val = e.target.value;
-                setGroupName(val.length > 0 ? val.charAt(0).toUpperCase() + val.slice(1) : "");
-              }}
-              placeholder="Enter group name"
-              className="w-full sm:w-60 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2.5 text-sm text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-emerald-500/40 transition-all"
-            />
+            <div className="w-full sm:w-80">
+              <CreatableSelect
+                id="group-name"
+                isClearable
+                isLoading={loadingGroups}
+                options={selectOptions}
+                value={groupName ? { label: groupName, value: groupName } : null}
+                onChange={handleGroupChange}
+                onCreateOption={handleCreateGroup}
+                placeholder="Select or enter group name"
+                menuPortalTarget={document.body}
+                styles={{
+                  menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                }}
+                unstyled
+                classNames={{
+                  control: ({ isFocused }) =>
+                    `flex rounded-xl border px-4 py-2 text-sm transition-all bg-white dark:bg-slate-800 ${
+                      isFocused
+                        ? "border-emerald-500 ring-2 ring-emerald-500/20"
+                        : "border-slate-200 dark:border-slate-700 hover:border-emerald-500 dark:hover:border-emerald-500"
+                    }`,
+                  valueContainer: () => "gap-1 text-slate-900 dark:text-slate-100",
+                  singleValue: () => "text-slate-900 dark:text-slate-100",
+                  input: () => "text-slate-900 dark:text-slate-100",
+                  placeholder: () => "text-slate-400 dark:text-slate-500",
+                  menu: () =>
+                    "mt-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg overflow-hidden z-50",
+                  menuList: () => "p-1",
+                  option: ({ isFocused, isSelected }) =>
+                    `px-3 py-2 text-sm rounded-lg cursor-pointer transition-colors ${
+                      isSelected
+                        ? "bg-emerald-500 text-white"
+                        : isFocused
+                        ? "bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                        : "text-slate-700 dark:text-slate-300"
+                    }`,
+                  noOptionsMessage: () => "p-2 text-sm text-slate-400 text-center",
+                  loadingMessage: () => "p-2 text-sm text-slate-400 text-center",
+                  dropdownIndicator: () => "text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 cursor-pointer",
+                  clearIndicator: () => "text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 cursor-pointer",
+                  indicatorSeparator: () => "bg-slate-200 dark:bg-slate-700 my-1 mx-2",
+                }}
+              />
+            </div>
           </div>
         </div>
 
