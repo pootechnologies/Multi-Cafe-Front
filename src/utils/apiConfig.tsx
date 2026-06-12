@@ -7,9 +7,10 @@ export const API_BASE_PROFILE = "https://cafe.pootechnologies.tech/auth";
 
 export const API_ENDPOINTS = {
   LOGIN: "/token/",
-  LOGIN_TENANT:"tenants/token/",
-  TENANT_PROVISION:"tenants/provision-tenant/",
-  TENANT_USERS:"tenant-users/",
+  LOGIN_TENANT: "tenants/token/",
+  TENANT_PROVISION: "tenants/provision-tenant/",
+  TENANT_USERS: "tenant-users/",
+  TENANT_GROUPS: "tenant/groups/",
   REFRESH: "/token/refresh/",
   PRODUCTS: "/products/",
   PRODUCT_LOG: "/product_log/",
