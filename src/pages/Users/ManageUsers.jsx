@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { API_BASE_URL, API_ENDPOINTS } from "../../utils/apiConfig";
 import { useForm } from "react-hook-form";
 import axiosInstance from "../../utils/axiosInstance";
+import Select from "react-select";
 import { Button } from "@/components/ui/button";
 import { t } from "i18next";
 import { Plus, Eye, EyeOff, Pencil, Trash2, ChevronLeft, ChevronRight, Hash, User, ShieldAlert, Mail, Search, ChevronUp } from "lucide-react";
@@ -20,6 +21,7 @@ const ManageUsers = () => {
   const itemsPerPage = 10;
   const [isVisible, setIsVisible] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [tenantGroups, setTenantGroups] = useState([]);
 
   const {
     register,
@@ -41,8 +43,18 @@ const ManageUsers = () => {
     }
   };
 
+  const fetchTenantGroups = async () => {
+    try {
+      const response = await axiosInstance.get(API_ENDPOINTS.TENANT_GROUPS);
+      setTenantGroups(response.data?.results || []);
+    } catch (error) {
+      console.error("Failed to fetch tenant groups:", error);
+    }
+  };
+
   useEffect(() => {
     fetchUsers();
+    fetchTenantGroups();
     const handleScroll = () => {
       if (window.scrollY > 300) {
         setIsVisible(true);
@@ -59,8 +71,6 @@ const ManageUsers = () => {
   useEffect(() => {
     if (selectedUser) {
       setValue("email", selectedUser.email);
-      setValue("is_superuser", selectedUser.is_superuser);
-      setValue("is_staff", selectedUser.is_staff);
     }
   }, [selectedUser, setValue]);
 
@@ -122,7 +132,7 @@ const ManageUsers = () => {
     setIsUpdateModalOpen(true);
   };
 
-  const handleUpdateSubmit = async (data) => {
+  const handleUpdateSubmit = async (data, selectedGroup) => {
     if (!data.email.trim()) {
       toast.error("Email is required!");
       return;
@@ -132,8 +142,7 @@ const ManageUsers = () => {
         `${API_ENDPOINTS.TENANT_USERS}${selectedUser.id}/`,
         {
           email: data.email,
-          is_superuser: data.is_superuser,
-          is_staff: data.is_staff,
+          groups: selectedGroup ? [selectedGroup.value] : [],
         }
       );
       fetchUsers();
@@ -145,7 +154,7 @@ const ManageUsers = () => {
     }
   };
 
-  const handleCreateUser = (data) => {
+  const handleCreateUser = (data, selectedGroup) => {
     if (!data.email.trim()) {
       toast.error("Email is required!");
       return;
@@ -157,9 +166,11 @@ const ManageUsers = () => {
     axiosInstance
       .post(API_ENDPOINTS.TENANT_USERS, {
         email: data.email,
+        username: data.email.split('@')[0],
         password: data.password,
-        is_superuser: data.is_superuser || false,
-        is_staff: data.is_staff || false,
+        is_superuser: false,
+        is_staff: false,
+        groups: selectedGroup ? [selectedGroup.value] : [],
       })
       .then((response) => {
         toast.success("User created successfully!");
@@ -194,21 +205,25 @@ const ManageUsers = () => {
                 {user.email}
               </p>
             </div>
-            
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-700">
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1">Superuser</p>
-                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${user.is_superuser ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-400'}`}>
-                  {user.is_superuser ? 'Yes' : 'No'}
-                </span>
-              </div>
-              
-              <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-700">
-                <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1">Staff Status</p>
-                <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${user.is_staff ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400'}`}>
-                  {user.is_staff ? 'Yes' : 'No'}
-                </span>
-              </div>
+            <div className="bg-slate-50 dark:bg-slate-800/50 rounded-xl p-4 border border-slate-100 dark:border-slate-700">
+              <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1">Tenant Groups</p>
+              {user.tenant_groups && user.tenant_groups.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5 mt-1">
+                  {user.tenant_groups.map((group, idx) => {
+                    const groupName = typeof group === "object" ? group.name : group;
+                    return (
+                      <span
+                        key={idx}
+                        className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100/50 dark:border-blue-800/30"
+                      >
+                        {groupName}
+                      </span>
+                    );
+                  })}
+                </div>
+              ) : (
+                <span className="text-xs text-slate-400 dark:text-slate-500 italic">No Groups</span>
+              )}
             </div>
           </div>
           <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end">
@@ -241,7 +256,12 @@ const ManageUsers = () => {
     </div>
   );
 
-  const UpdateModal = ({ onClose, onSubmit }) => {
+  const UpdateModal = ({ onClose, onSubmit, user, groups }) => {
+    const initialGroupName = user.tenant_groups?.[0]?.name || user.tenant_groups?.[0] || "";
+    const [selectedGroup, setSelectedGroup] = useState(
+      initialGroupName ? { label: initialGroupName, value: initialGroupName } : null
+    );
+
     return (
       <div className="fixed inset-0 z-[100] flex items-start md:items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
         <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/60 dark:border-slate-800 overflow-hidden flex flex-col mt-6 md:mt-0 max-h-[calc(100vh-180px)] md:max-h-[85vh]" onClick={e => e.stopPropagation()}>
@@ -253,7 +273,7 @@ const ManageUsers = () => {
               <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Update User</h2>
             </div>
           </div>
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+          <form onSubmit={handleSubmit((data) => onSubmit(data, selectedGroup))} className="flex flex-col flex-1 min-h-0">
             <div className="p-6 overflow-y-auto custom-scrollbar space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Email Address</label>
@@ -265,24 +285,47 @@ const ManageUsers = () => {
                 {errors.email && <p className="mt-2 text-sm text-rose-500">Email is required</p>}
               </div>
 
-              <div className="flex flex-col gap-3 pt-2">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    {...register("is_superuser")}
-                    className="h-5 w-5 rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500/40"
-                  />
-                  <span className="text-sm font-medium text-slate-750 dark:text-slate-300">Is Superuser</span>
-                </label>
-
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    {...register("is_staff")}
-                    className="h-5 w-5 rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500/40"
-                  />
-                  <span className="text-sm font-medium text-slate-750 dark:text-slate-300">Is Staff</span>
-                </label>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Tenant Group</label>
+                <Select
+                  value={selectedGroup}
+                  onChange={setSelectedGroup}
+                  options={groups.map((g) => ({ label: g.name, value: g.name }))}
+                  placeholder="Select Tenant Group..."
+                  isClearable
+                  menuPortalTarget={document.body}
+                  styles={{
+                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                  }}
+                  unstyled
+                  classNames={{
+                    control: ({ isFocused }) =>
+                      `flex rounded-xl border px-4 py-2 text-sm transition-all bg-white dark:bg-slate-800 ${
+                        isFocused
+                          ? "border-blue-500 ring-2 ring-blue-500/20"
+                          : "border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500"
+                      }`,
+                    valueContainer: () => "gap-1 text-slate-900 dark:text-slate-100",
+                    singleValue: () => "text-slate-900 dark:text-slate-100",
+                    input: () => "text-slate-900 dark:text-slate-100",
+                    placeholder: () => "text-slate-400 dark:text-slate-500",
+                    menu: () =>
+                      "mt-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg overflow-hidden z-50",
+                    menuList: () => "p-1",
+                    option: ({ isFocused, isSelected }) =>
+                      `px-3 py-2 text-sm rounded-lg cursor-pointer transition-colors ${
+                        isSelected
+                          ? "bg-blue-500 text-white"
+                          : isFocused
+                          ? "bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                          : "text-slate-700 dark:text-slate-300"
+                      }`,
+                    noOptionsMessage: () => "p-2 text-sm text-slate-400 text-center",
+                    dropdownIndicator: () => "text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 cursor-pointer",
+                    clearIndicator: () => "text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 cursor-pointer",
+                    indicatorSeparator: () => "bg-slate-200 dark:bg-slate-700 my-1 mx-2",
+                  }}
+                />
               </div>
             </div>
             <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end gap-3">
@@ -295,8 +338,9 @@ const ManageUsers = () => {
     );
   };
 
-  const CreateUserModal = ({ onClose, onSubmit }) => {
+  const CreateUserModal = ({ onClose, onSubmit, groups }) => {
     const [showPassword, setShowPassword] = useState(false);
+    const [selectedGroup, setSelectedGroup] = useState(null);
 
     return (
       <div className="fixed inset-0 z-[100] flex items-start md:items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
@@ -309,7 +353,7 @@ const ManageUsers = () => {
               <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Add User</h2>
             </div>
           </div>
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col flex-1 min-h-0">
+          <form onSubmit={handleSubmit((data) => onSubmit(data, selectedGroup))} className="flex flex-col flex-1 min-h-0">
             <div className="p-6 overflow-y-auto custom-scrollbar space-y-4">
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Email Address</label>
@@ -342,27 +386,50 @@ const ManageUsers = () => {
                 {errors.password && <p className="mt-2 text-sm text-rose-500">Password must be at least 6 characters</p>}
               </div>
 
-              <div className="flex flex-col gap-3 pt-2">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    {...register("is_superuser")}
-                    className="h-5 w-5 rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500/40"
-                  />
-                  <span className="text-sm font-medium text-slate-750 dark:text-slate-300">Is Superuser</span>
-                </label>
-
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    {...register("is_staff")}
-                    className="h-5 w-5 rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500/40"
-                  />
-                  <span className="text-sm font-medium text-slate-750 dark:text-slate-300">Is Staff</span>
-                </label>
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Tenant Group</label>
+                <Select
+                  value={selectedGroup}
+                  onChange={setSelectedGroup}
+                  options={groups.map((g) => ({ label: g.name, value: g.name }))}
+                  placeholder="Select Tenant Group..."
+                  isClearable
+                  menuPortalTarget={document.body}
+                  styles={{
+                    menuPortal: (base) => ({ ...base, zIndex: 9999 }),
+                  }}
+                  unstyled
+                  classNames={{
+                    control: ({ isFocused }) =>
+                      `flex rounded-xl border px-4 py-2 text-sm transition-all bg-white dark:bg-slate-800 ${
+                        isFocused
+                          ? "border-blue-500 ring-2 ring-blue-500/20"
+                          : "border-slate-200 dark:border-slate-700 hover:border-blue-500 dark:hover:border-blue-500"
+                      }`,
+                    valueContainer: () => "gap-1 text-slate-900 dark:text-slate-100",
+                    singleValue: () => "text-slate-900 dark:text-slate-100",
+                    input: () => "text-slate-900 dark:text-slate-100",
+                    placeholder: () => "text-slate-400 dark:text-slate-500",
+                    menu: () =>
+                      "mt-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 shadow-lg overflow-hidden z-50",
+                    menuList: () => "p-1",
+                    option: ({ isFocused, isSelected }) =>
+                      `px-3 py-2 text-sm rounded-lg cursor-pointer transition-colors ${
+                        isSelected
+                          ? "bg-blue-500 text-white"
+                          : isFocused
+                          ? "bg-slate-100 dark:bg-slate-700 text-slate-900 dark:text-slate-100"
+                          : "text-slate-700 dark:text-slate-300"
+                      }`,
+                    noOptionsMessage: () => "p-2 text-sm text-slate-400 text-center",
+                    dropdownIndicator: () => "text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 cursor-pointer",
+                    clearIndicator: () => "text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 cursor-pointer",
+                    indicatorSeparator: () => "bg-slate-200 dark:bg-slate-700 my-1 mx-2",
+                  }}
+                />
               </div>
             </div>
-            <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end gap-3">
+            <div className="p-6 border-t border-slate-105 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end gap-3">
               <Button type="button" onClick={onClose} className="rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 px-6">Cancel</Button>
               <Button type="submit" className="rounded-xl bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 text-white px-6">Create User</Button>
             </div>
@@ -420,15 +487,14 @@ const ManageUsers = () => {
                 <tr>
                   <th className="text-left font-semibold text-slate-600 dark:text-slate-400 h-14 pl-8 text-sm">ID</th>
                   <th className="text-left font-semibold text-slate-600 dark:text-slate-400 h-14 text-sm">EMAIL</th>
-                  <th className="text-left font-semibold text-slate-600 dark:text-slate-400 h-14 text-sm">SUPERUSER</th>
-                  <th className="text-left font-semibold text-slate-600 dark:text-slate-400 h-14 text-sm">STAFF</th>
+                  <th className="text-left font-semibold text-slate-600 dark:text-slate-400 h-14 text-sm">TENANT GROUPS</th>
                   <th className="text-right font-semibold text-slate-600 dark:text-slate-400 h-14 pr-8 text-sm">ACTIONS</th>
                 </tr>
               </thead>
               <tbody>
                 {displayUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="h-96">
+                    <td colSpan={4} className="h-96">
                       <div className="flex flex-col items-center justify-center text-center h-full space-y-4">
                         <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/30 text-blue-500 dark:text-blue-400 rounded-full flex items-center justify-center mb-2 shadow-sm border border-blue-100 dark:border-blue-900/50">
                           <User className="h-10 w-10 opacity-80" />
@@ -451,7 +517,7 @@ const ManageUsers = () => {
                   displayUsers.map((user) => (
                     <tr key={user.id} className="border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors group h-20">
                       <td className="py-4 pl-8">
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-sm border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-305 font-medium text-sm border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
                           <Hash className="h-3.5 w-3.5 mr-1 text-slate-400" />
                           {user.id}
                         </span>
@@ -465,14 +531,23 @@ const ManageUsers = () => {
                         </div>
                       </td>
                       <td className="py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${user.is_superuser ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-400'}`}>
-                          {user.is_superuser ? 'Superuser' : 'Regular'}
-                        </span>
-                      </td>
-                      <td className="py-4">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${user.is_staff ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400'}`}>
-                          {user.is_staff ? 'Staff' : 'No Staff'}
-                        </span>
+                        {user.tenant_groups && user.tenant_groups.length > 0 ? (
+                          <div className="flex flex-wrap gap-1.5">
+                            {user.tenant_groups.map((group, idx) => {
+                              const groupName = typeof group === "object" ? group.name : group;
+                              return (
+                                <span
+                                  key={idx}
+                                  className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100/50 dark:border-blue-800/30 shadow-sm"
+                                >
+                                  {groupName}
+                                </span>
+                              );
+                            })}
+                          </div>
+                        ) : (
+                          <span className="text-xs text-slate-400 dark:text-slate-500 italic">No Groups</span>
+                        )}
                       </td>
                       <td className="py-4 pr-8 text-right">
                         <div className="flex justify-end gap-2">
@@ -542,20 +617,25 @@ const ManageUsers = () => {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="bg-slate-50/50 dark:bg-slate-950/50 rounded-xl p-3 border border-slate-100/50 dark:border-slate-800/50">
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1">Superuser</p>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${user.is_superuser ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-400'}`}>
-                      {user.is_superuser ? 'Yes' : 'No'}
-                    </span>
-                  </div>
-
-                  <div className="bg-slate-50/50 dark:bg-slate-950/50 rounded-xl p-3 border border-slate-100/50 dark:border-slate-800/50">
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mb-1">Staff</p>
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${user.is_staff ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-400' : 'bg-rose-100 text-rose-800 dark:bg-rose-900/30 dark:text-rose-400'}`}>
-                      {user.is_staff ? 'Yes' : 'No'}
-                    </span>
-                  </div>
+                <div className="mb-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3 border border-slate-100 dark:border-slate-800/60">
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Tenant Groups</p>
+                  {user.tenant_groups && user.tenant_groups.length > 0 ? (
+                    <div className="flex flex-wrap gap-1.5 mt-1">
+                      {user.tenant_groups.map((group, idx) => {
+                        const groupName = typeof group === "object" ? group.name : group;
+                        return (
+                          <span
+                            key={idx}
+                            className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 border border-blue-100/50 dark:border-blue-800/30"
+                          >
+                            {groupName}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <span className="text-[11px] text-slate-400 dark:text-slate-500 italic">No Groups</span>
+                  )}
                 </div>
 
                 <div className="flex justify-end gap-2 pt-2 border-t border-slate-100/80 dark:border-slate-800">
@@ -596,11 +676,11 @@ const ManageUsers = () => {
       {isConfirmDeleteOpen && (
         <ConfirmDeleteModal onConfirm={deleteUser} onCancel={closeConfirmDelete} />
       )}
-      {isUpdateModalOpen && (
-        <UpdateModal onClose={() => setIsUpdateModalOpen(false)} onSubmit={handleUpdateSubmit} />
+      {isUpdateModalOpen && selectedUser && (
+        <UpdateModal onClose={() => setIsUpdateModalOpen(false)} onSubmit={handleUpdateSubmit} user={selectedUser} groups={tenantGroups} />
       )}
       {isCreateModalOpen && (
-        <CreateUserModal onClose={() => { setIsCreateModalOpen(false); reset(); }} onSubmit={handleCreateUser} />
+        <CreateUserModal onClose={() => { setIsCreateModalOpen(false); reset(); }} onSubmit={handleCreateUser} groups={tenantGroups} />
       )}
 
       {isVisible && (
