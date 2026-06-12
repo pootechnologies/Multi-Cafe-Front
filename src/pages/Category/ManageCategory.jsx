@@ -32,7 +32,8 @@ const ManageCategory = () => {
   const fetchCategories = async () => {
     try {
       const response = await axiosInstance.get(API_ENDPOINTS.CATEGORIES);
-      const sortedCategories = response?.data?.results?.sort((a, b) => b.id - a.id);
+      const data = Array.isArray(response?.data) ? response.data : (response?.data?.results || []);
+      const sortedCategories = [...data].sort((a, b) => b.id - a.id);
       setCategories(sortedCategories);
       setFilteredCategories(sortedCategories);
     } catch (error) {
@@ -287,8 +288,9 @@ const ManageCategory = () => {
     );
   };
 
-  const pageCount = Math.ceil(filteredCategories?.length / itemsPerPage);
-  const displayCategories = filteredCategories.slice(
+  const safeCategories = filteredCategories || [];
+  const pageCount = Math.ceil(safeCategories.length / itemsPerPage);
+  const displayCategories = safeCategories.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
