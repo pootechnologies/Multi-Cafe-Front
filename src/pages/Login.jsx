@@ -50,6 +50,9 @@ const LoginPage = () => {
       const refresh = loginResponse?.data?.refresh;
       const user = loginResponse?.data?.user;
       const tenants = loginResponse?.data?.tenants;
+      const data = loginResponse?.data;
+
+      console.log(data)
 
       if (!token) throw new Error("No access token received");
 
