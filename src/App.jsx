@@ -52,6 +52,7 @@ import SupplierReport from "./pages/Purchase/SupplierReport";
 import AddPurchasePage from "./pages/Purchase/AddPurchasePage";
 import ExpenseProductPage from "./pages/Purchase/ExpenseProductPage";
 import AddExpenseProductPage from "./pages/Purchase/AddExpenseProductPage";
+import Permissions from "./pages/Users/Permissions";
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -159,6 +160,7 @@ function App() {
           "/add_category",
           "/manage_category",
           "/manage_users",
+          "/permissions",
           "/accounts",
           "/company_profile",
           "/logs",
@@ -192,6 +194,7 @@ function App() {
                     "/add_category": <AddCategory />,
                     "/manage_category": <ManageCategory />,
                     "/manage_users": <ManageUsers />,
+                    "/permissions": <Permissions />,
                     "/accounts": <Accounts />,
                     "/company_profile": <CompanyProfile />,
                     "/logs": <Logs />,
