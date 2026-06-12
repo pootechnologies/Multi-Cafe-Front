@@ -24,11 +24,12 @@ const AddProduct = () => {
     const fetchCategories = async () => {
       try {
         const response = await axiosInstance.get(API_ENDPOINTS.CATEGORIES);
+        const data = Array.isArray(response?.data) ? response.data : (response?.data?.results || []);
         setCategories(
-          response?.data?.results?.map((category) => ({
+          data.map((category) => ({
             id: category.id,
             label: category.name,
-          })) || []
+          }))
         );
       } catch (error) {
         console.error("Error fetching categories:", error);
@@ -37,11 +38,12 @@ const AddProduct = () => {
     const fetchSuppliers = async () => {
       try {
         const response = await axiosInstance.get(API_ENDPOINTS.SUPPLIERS);
+        const data = Array.isArray(response?.data) ? response.data : (response?.data?.results || []);
         setSuppliers(
-          response?.data?.results?.map((supplier) => ({
+          data.map((supplier) => ({
             id: supplier.id,
             label: supplier.name,
-          })) || []
+          }))
         );
       } catch (error) {
         console.error("Error fetching suppliers:", error);
@@ -332,7 +334,8 @@ const AddProduct = () => {
         onClose={() => setIsCategoryModalOpen(false)}
         onCategoryAdded={async () => {
           const resp = await axiosInstance.get(API_ENDPOINTS.CATEGORIES);
-          setCategories(resp.data.results.map(c => ({ id: c.id, label: c.name })));
+          const data = Array.isArray(resp?.data) ? resp.data : (resp?.data?.results || []);
+          setCategories(data.map(c => ({ id: c.id, label: c.name })));
         }}
       />
       <AddSupplierModal
@@ -340,7 +343,8 @@ const AddProduct = () => {
         onClose={() => setIsSupplierModalOpen(false)}
         onSupplierAdded={async () => {
           const resp = await axiosInstance.get(API_ENDPOINTS.SUPPLIERS);
-          setSuppliers(resp.data.results.map(s => ({ id: s.id, label: s.name })));
+          const data = Array.isArray(resp?.data) ? resp.data : (resp?.data?.results || []);
+          setSuppliers(data.map(s => ({ id: s.id, label: s.name })));
         }}
       />
     </div>
