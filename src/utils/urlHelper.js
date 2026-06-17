@@ -5,7 +5,7 @@ import { API_BASE_URL, IMAGE_BASE_URL } from "./apiConfig";
 export const getBaseURL = () => {
   const schemaName = localStorage.getItem("schema_name");
   if (schemaName && schemaName !== "public") {
-    return `https://${schemaName}.cafe.pootechnologies.tech/api`;
+    return `https://${schemaName}.dev-cafe.pootechnologies.tech/api`;
   }
   return API_BASE_URL;
 };
@@ -14,7 +14,7 @@ export const getBaseURL = () => {
 export const getImageBaseURL = () => {
   const schemaName = localStorage.getItem("schema_name");
   if (schemaName && schemaName !== "public") {
-    return `https://${schemaName}.cafe.pootechnologies.tech/`;
+    return `https://${schemaName}.dev-cafe.pootechnologies.tech/`;
   }
   return IMAGE_BASE_URL;
 };
