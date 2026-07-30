@@ -1,8 +1,8 @@
-export const API_BASE_URL = "https://cafe.pootechnologies.tech/api";
-export const API_BASE_URL_LOGIN = "https://cafe.pootechnologies.tech/";
-export const IMAGE_BASE_URL = "https://cafe.pootechnologies.tech/";
+export const API_BASE_URL = "https://cafe-api.pootechnologies.tech/api";
+export const API_BASE_URL_LOGIN = "https://cafe-api.pootechnologies.tech/";
+export const IMAGE_BASE_URL = "https://cafe-api.pootechnologies.tech/";
 export const API_BASE_RENDER_URL = "https://poo-drf.onrender.com/api";
-export const API_BASE_PROFILE = "https://cafe.pootechnologies.tech/auth";
+export const API_BASE_PROFILE = "https://cafe-api.pootechnologies.tech/auth";
 
 
 export const API_ENDPOINTS = {
