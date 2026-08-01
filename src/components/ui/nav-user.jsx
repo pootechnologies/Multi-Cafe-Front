@@ -41,6 +41,8 @@ export function NavUser() {
       localStorage.removeItem("schema_name");
       localStorage.removeItem("isFirstLogin");
       localStorage.removeItem("token");
+      localStorage.removeItem("tenant_groups");
+      localStorage.removeItem("tenant_permissions");
       // Clear React Query cache
       queryClient.clear();
       // Navigate to login page
