@@ -53,6 +53,13 @@ import AddPurchasePage from "./pages/Purchase/AddPurchasePage";
 import ExpenseProductPage from "./pages/Purchase/ExpenseProductPage";
 import AddExpenseProductPage from "./pages/Purchase/AddExpenseProductPage";
 import Permissions from "./pages/Users/Permissions";
+import AddSubscription from "./pages/Accounts/AddSubscription";
+import BusinessCategoryManagement from "./pages/Accounts/BusinessCategoryManagement";
+import ManageBusinessCategory from "./pages/Accounts/ManageBusinessCategory";
+import ManageSubscriptions from "./pages/Accounts/ManageSubscriptions";
+import Subscriptions from "./pages/Accounts/Subscriptions";
+import TenantList from "./pages/Accounts/TenantList";
+import TenantManagement from "./pages/Accounts/TenantManagement";
 
 function App() {
   const [isLoading, setIsLoading] = useState(true);
@@ -164,7 +171,14 @@ function App() {
           "/accounts",
           "/company_profile",
           "/logs",
-          "/report"
+          "/report",
+          "/subscription",
+          "/add_subscription",
+          "/manage_subscriptions",
+          "/add_tenant",
+          "/tenant_list",
+          "/business_categories",
+          "/manage_business_categories"
         ].map((path) => (
           <Route
             key={path}
@@ -199,6 +213,13 @@ function App() {
                     "/company_profile": <CompanyProfile />,
                     "/logs": <Logs />,
                     "/report": <ExportPage />,
+                    "/subscription": <Subscriptions />,
+                    "/add_subscription": <AddSubscription />,
+                    "/manage_subscriptions": <ManageSubscriptions />,
+                    "/add_tenant": <TenantManagement />,
+                    "/tenant_list": <TenantList />,
+                    "/business_categories": <BusinessCategoryManagement />,
+                    "/manage_business_categories": <ManageBusinessCategory />
                   }[path]
                 }
               </MainLayout>
@@ -238,7 +259,7 @@ function App() {
                     "/expense-products/:expenseId": <ExpenseProductPage />,
                     "/add-expense-product/:expenseId": <AddExpenseProductPage />,
                     "/expense-detail": <ExpenseDetailPage />,
-                    "/performa-detail": <PerformaDetailPage />,
+                    "/performa-detail": <PerformaDetailPage />
                   }[path]
                 }
               </MainLayout>
