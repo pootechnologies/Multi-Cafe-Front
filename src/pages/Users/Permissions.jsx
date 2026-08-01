@@ -44,10 +44,13 @@ const Permissions = () => {
   }, []);
 
   const groupedPermissions = availablePermissions.reduce((acc, permission) => {
-    const [app, ...rest] = permission.split(".");
-    const action = rest.join(".");
-    if (!acc[app]) acc[app] = [];
-    acc[app].push({ action, fullPermission: permission });
+    const parts = permission.split(".");
+    const actionPart = parts[1] || parts[0];
+    const [verb, ...resourceParts] = actionPart.split("_");
+    const resource = resourceParts.length > 0 ? resourceParts.join(" ") : actionPart;
+    
+    if (!acc[resource]) acc[resource] = [];
+    acc[resource].push({ action: verb, fullPermission: permission });
     return acc;
   }, {});
 
@@ -183,8 +186,8 @@ const Permissions = () => {
         </div>
 
         {/* Groups Section */}
-        <div className="bg-white/80 dark:bg-slate-900/50 backdrop-blur-xl rounded-[20px] border border-slate-200/60 dark:border-slate-800 shadow-sm p-5 relative z-40">
-          <h2 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+        <div className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-2xl rounded-3xl border border-white/40 dark:border-slate-800/80 shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.2)] p-6 md:p-8 relative z-40">
+          <h2 className="text-sm font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-6 flex items-center gap-2">
             <span className="h-2 w-2 rounded-full bg-emerald-500 inline-block" />
             Groups
           </h2>
@@ -250,8 +253,8 @@ const Permissions = () => {
             <p className="text-slate-500 dark:text-slate-400 mt-2 text-sm">Could not load permissions from the server.</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {Object.entries(groupedPermissions).map(([app, perms]) => {
+          <div className="grid grid-cols-1 gap-4">
+            {Object.entries(groupedPermissions).map(([resource, perms]) => {
               const selectedCount = perms.filter((p) =>
                 selectedPermissions.includes(p.fullPermission)
               ).length;
@@ -259,47 +262,53 @@ const Permissions = () => {
 
               return (
                 <div
-                  key={app}
-                  className="bg-white/80 dark:bg-slate-900/50 backdrop-blur-xl rounded-[20px] border border-slate-200/60 dark:border-slate-800 overflow-hidden shadow-sm"
+                  key={resource}
+                  className="group relative bg-white/70 dark:bg-slate-900/70 backdrop-blur-2xl rounded-2xl border border-white/50 dark:border-slate-800 shadow-[0_4px_20px_rgb(0,0,0,0.03)] dark:shadow-[0_4px_20px_rgb(0,0,0,0.2)] overflow-hidden transition-all duration-300 hover:shadow-[0_8px_30px_rgb(16,185,129,0.06)] hover:border-emerald-200 dark:hover:border-emerald-800 flex flex-col"
                 >
-                  {/* App Group Header */}
-                  <div className="flex items-center justify-between px-5 py-3 bg-slate-50/80 dark:bg-slate-800/60 border-b border-slate-200/60 dark:border-slate-700">
-                    <label className="flex items-center gap-3 cursor-pointer">
+                  {/* Resource Group Header */}
+                  <div className="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-slate-50/50 to-white/50 dark:from-slate-800/40 dark:to-slate-900/40 border-b border-slate-100 dark:border-slate-800">
+                    <label className="flex items-center gap-3 cursor-pointer group/header">
+                      <div className={`flex items-center justify-center w-5 h-5 rounded-md border transition-colors ${allSelected ? "bg-emerald-500 border-emerald-500 text-white shadow-sm" : "bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 group-hover/header:border-emerald-400"}`}>
+                         {allSelected && <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                      </div>
                       <input
                         type="checkbox"
                         checked={allSelected}
                         onChange={(e) => toggleApp(perms, e.target.checked)}
-                        className="h-4 w-4 accent-emerald-500"
+                        className="sr-only"
                       />
-                      <h4 className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider text-xs">
-                        {app}
+                      <h4 className="font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest text-sm">
+                        {resource}
                       </h4>
                     </label>
-                    <span className="text-xs bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 font-semibold px-2.5 py-0.5 rounded-full">
+                    <span className={`text-xs font-bold px-3 py-1 rounded-full border transition-colors ${selectedCount > 0 ? "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/40 dark:border-emerald-800 dark:text-emerald-400" : "bg-slate-50 border-slate-200 text-slate-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400"}`}>
                       {selectedCount} / {perms.length}
                     </span>
                   </div>
 
                   {/* Permissions */}
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 p-4">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 p-5 flex-grow">
                     {perms.map(({ action, fullPermission }) => {
                       const isChecked = selectedPermissions.includes(fullPermission);
                       return (
                         <label
                           key={fullPermission}
-                          className={`flex items-center gap-2 p-2.5 rounded-xl border cursor-pointer transition-all text-xs select-none
+                          className={`flex items-center gap-3 p-3 rounded-xl border cursor-pointer transition-all duration-200 select-none group/item
                             ${isChecked
-                              ? "bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700 shadow-sm"
-                              : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 hover:border-emerald-300 dark:hover:border-emerald-700"
+                              ? "bg-emerald-50/80 dark:bg-emerald-900/30 border-emerald-300 dark:border-emerald-600 shadow-sm"
+                              : "bg-white/50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 hover:border-emerald-200 dark:hover:border-emerald-700 hover:shadow-sm"
                             }`}
                         >
                           <input
                             type="checkbox"
                             checked={isChecked}
                             onChange={(e) => togglePerm(fullPermission, e.target.checked)}
-                            className="h-3.5 w-3.5 accent-emerald-500 shrink-0"
+                            className="sr-only"
                           />
-                          <span className="capitalize text-slate-700 dark:text-slate-300 leading-tight">
+                          <div className={`flex items-center justify-center w-5 h-5 shrink-0 rounded-md border transition-colors ${isChecked ? "bg-emerald-500 border-emerald-500 text-white" : "bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-600 group-hover/item:border-emerald-400"}`}>
+                            {isChecked && <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
+                          </div>
+                          <span className={`capitalize font-medium text-sm leading-tight transition-colors ${isChecked ? "text-emerald-800 dark:text-emerald-200" : "text-slate-600 dark:text-slate-400 group-hover/item:text-slate-900 dark:group-hover/item:text-slate-200"}`}>
                             {action.replace(/_/g, " ")}
                           </span>
                         </label>
