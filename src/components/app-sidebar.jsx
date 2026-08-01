@@ -9,7 +9,9 @@ import {
   Utensils,
   DollarSign,
   Coffee,
-  Shield
+  Shield,
+  Building2,
+  Settings
 } from "lucide-react";
 import { NavMain } from "@/components/ui/nav-main";
 import { NavUser } from "@/components/ui/nav-user";
@@ -92,22 +94,43 @@ const data = {
       ],
     },
     {
-      title: "users",
+      title: "Settings",
       url: "#",
-      icon: Users,
+      icon: Settings,
       items: [
         { title: "manage_users", url: "/manage_users" },
         { title: "permissions", url: "/permissions", icon: Shield },
+        {
+          title: "Company Profile",
+          url: "/company_profile",
+          permission: "inventory.view_companyinfo",
+        },
+        { title: "Subscription", url: "/subscription" },
       ],
-    }
+    },
+    {
+      title: "Manage Tenants",
+      url: "#",
+      icon: Building2,
+      items: [
+        { title: "Add Tenant", url: "/add_tenant" },
+        { title: "Tenant List", url: "/tenant_list" },
+        { title: "Add Subscriptions", url: "/add_subscription" },
+        { title: "Manage Subscriptions", url: "/manage_subscriptions" },
+        { title: "Add Business Category", url: "/business_categories" },
+        { title: "Manage Business Categories", url: "/manage_business_categories" },
+
+      ],
+
+    },
   ],
 };
 
 export function AppSidebar({ ...props }) {
   return (
-    <Sidebar 
-      collapsible="icon" 
-      {...props} 
+    <Sidebar
+      collapsible="icon"
+      {...props}
       variant="inset"
       className="max-md:bg-slate-50/95 max-md:dark:bg-slate-950/95 max-md:backdrop-blur-xl border-r border-slate-100/50 dark:border-slate-800/50"
     >
