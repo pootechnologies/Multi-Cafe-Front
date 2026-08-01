@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { API_ENDPOINTS } from "../../utils/apiConfig";
+import { API_BASE_TENANT_URL, API_ENDPOINTS } from "../../utils/apiConfig";
 import { useForm } from "react-hook-form";
 import axiosInstance from "../../utils/axiosInstance";
 import { Button } from "@/components/ui/button";
@@ -81,7 +81,7 @@ const ManageSubscriptions = () => {
     setIsLoading(true);
     try {
       const response = await axiosInstance.get(
-        `${API_ENDPOINTS.TENANT_SUBSCRIPTIONS_MANAGE}`,
+        `${API_BASE_TENANT_URL}${API_ENDPOINTS.TENANT_SUBSCRIPTIONS_MANAGE}`,
       );
       const sortedSubscriptions = response.data.results.sort(
         (a, b) => b.id - a.id,
@@ -159,8 +159,9 @@ const ManageSubscriptions = () => {
     if (!subscriptionToDelete) return Promise.resolve();
     return axiosInstance
       .delete(
-        `${API_ENDPOINTS.TENANT_SUBSCRIPTIONS_MANAGE}${subscriptionToDelete.id}/`,
+        `${API_BASE_TENANT_URL}${API_ENDPOINTS.TENANT_SUBSCRIPTIONS_MANAGE}${subscriptionToDelete.id}/`,
       )
+
       .then(() => {
         setSubscriptions(
           subscriptions.filter(
@@ -196,7 +197,7 @@ const ManageSubscriptions = () => {
     }
     try {
       await axiosInstance.patch(
-        `${API_ENDPOINTS.TENANT_SUBSCRIPTIONS_MANAGE}${selectedSubscription.id}/`,
+        `${API_BASE_TENANT_URL}${API_ENDPOINTS.TENANT_SUBSCRIPTIONS_MANAGE}${selectedSubscription.id}/`,
         {
           name: data.name,
           price: data.price,
@@ -484,7 +485,7 @@ const ManageSubscriptions = () => {
                     type="checkbox"
                     id="is_active"
                     {...register("is_active")}
-                     className="w-5 h-5 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
+                    className="w-5 h-5 rounded border-slate-300 text-slate-900 focus:ring-slate-500"
                   />
                   <label
                     htmlFor="is_active"
@@ -528,25 +529,25 @@ const ManageSubscriptions = () => {
   };
 
   return (
-     <div className="flex-1  p-4 md:p-8 max-w-7xl mx-auto w-full">
-       {isVisible && (
-         <button
-           onClick={scrollToTop}
-           className="fixed bottom-6 left-6 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:bg-slate-800 dark:hover:bg-slate-200 transition-all z-20"
-         >
-           <ChevronUp className="h-6 w-6" />
-         </button>
-       )}
+    <div className="flex-1  p-4 md:p-8 max-w-7xl mx-auto w-full">
+      {isVisible && (
+        <button
+          onClick={scrollToTop}
+          className="fixed bottom-6 left-6 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 w-12 h-12 rounded-full flex items-center justify-center shadow-lg hover:bg-slate-800 dark:hover:bg-slate-200 transition-all z-20"
+        >
+          <ChevronUp className="h-6 w-6" />
+        </button>
+      )}
 
-       <div className="bg-white rounded-3xl border border-slate-200/60 dark:border-slate-800 shadow-sm overflow-hidden">
-         <div className="bg-gradient-to-r from-slate-900/10 via-slate-800/5 to-transparent px-6 py-6 border-b border-slate-200/60 dark:border-slate-800">
-           <h2 className="flex items-center gap-3 text-2xl font-bold text-slate-900 dark:text-slate-100">
-             <div className="p-2.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl shadow-lg shadow-slate-900/20">
-               <Crown className="h-6 w-6" />
-             </div>
-             Manage Subscriptions
-           </h2>
-         </div>
+      <div className="bg-white rounded-3xl border border-slate-200/60 dark:border-slate-800 shadow-sm overflow-hidden">
+        <div className="bg-gradient-to-r from-slate-900/10 via-slate-800/5 to-transparent px-6 py-6 border-b border-slate-200/60 dark:border-slate-800">
+          <h2 className="flex items-center gap-3 text-2xl font-bold text-slate-900 dark:text-slate-100">
+            <div className="p-2.5 bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 rounded-xl shadow-lg shadow-slate-900/20">
+              <Crown className="h-6 w-6" />
+            </div>
+            Manage Subscriptions
+          </h2>
+        </div>
 
         <div className="p-4 sm:p-6 space-y-6">
           {/* Filter Toolbar - Select Only */}
@@ -657,11 +658,10 @@ const ManageSubscriptions = () => {
                       </TableCell>
                       <TableCell>
                         <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                            subscription.is_active
-                              ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700"
-                           : "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800"
-                          }`}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${subscription.is_active
+                            ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700"
+                            : "bg-rose-50 dark:bg-rose-900/30 text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-800"
+                            }`}
                         >
                           <Check className="h-3 w-3" />
                           {subscription.is_active ? "Active" : "Inactive"}
@@ -674,16 +674,16 @@ const ManageSubscriptions = () => {
                           </span>
                         </TableCell>
                       )}
-                       <TableCell className="text-right">
-                         <div className="flex justify-end gap-2">
-                           <button onClick={() => handleViewClick(subscription)} className="h-9 w-9 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 dark:hover:border-blue-800 shadow-sm transition-all flex items-center justify-center" title="View">
-                             <Eye className="h-4 w-4" />
-                           </button>
-                           <button onClick={() => handleUpdateClick(subscription)} className="h-9 w-9 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:border-amber-200 dark:hover:border-amber-800 shadow-sm transition-all flex items-center justify-center" title="Update">
-                             <Pencil className="h-4 w-4" />
-                           </button>
-                         </div>
-                       </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <button onClick={() => handleViewClick(subscription)} className="h-9 w-9 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:border-blue-200 dark:hover:border-blue-800 shadow-sm transition-all flex items-center justify-center" title="View">
+                            <Eye className="h-4 w-4" />
+                          </button>
+                          <button onClick={() => handleUpdateClick(subscription)} className="h-9 w-9 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 hover:border-amber-200 dark:hover:border-amber-800 shadow-sm transition-all flex items-center justify-center" title="Update">
+                            <Pencil className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))
                 ) : isLoading ? (
@@ -734,14 +734,14 @@ const ManageSubscriptions = () => {
                         {subscription.name}
                       </p>
                     </div>
-                     <div className="flex gap-2">
-                       <button onClick={() => handleViewClick(subscription)} className="h-8 w-8 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center justify-center transition-colors" title="View">
-                         <Eye className="h-4 w-4" />
-                       </button>
-                       <button onClick={() => handleUpdateClick(subscription)} className="h-8 w-8 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center justify-center transition-colors" title="Update">
-                         <Pencil className="h-4 w-4" />
-                       </button>
-                     </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => handleViewClick(subscription)} className="h-8 w-8 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-900/20 flex items-center justify-center transition-colors" title="View">
+                        <Eye className="h-4 w-4" />
+                      </button>
+                      <button onClick={() => handleUpdateClick(subscription)} className="h-8 w-8 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-900/20 flex items-center justify-center transition-colors" title="Update">
+                        <Pencil className="h-4 w-4" />
+                      </button>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
@@ -768,11 +768,10 @@ const ManageSubscriptions = () => {
                       Status
                     </p>
                     <span
-                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                        subscription.is_active
-                          ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700"
-                          : "bg-red-100 text-red-700 border border-red-200"
-                      }`}
+                      className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${subscription.is_active
+                        ? "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200/60 dark:border-slate-700"
+                        : "bg-red-100 text-red-700 border border-red-200"
+                        }`}
                     >
                       <Check className="h-3 w-3" />
                       {subscription.is_active ? "Active" : "Inactive"}
