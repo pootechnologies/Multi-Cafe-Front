@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
-import { API_ENDPOINTS } from "@/utils/apiConfig";
+import { API_BASE_TENANT_URL, API_ENDPOINTS } from "@/utils/apiConfig";
 import axiosInstance from "@/utils/axiosInstance";
 
 
@@ -59,7 +59,7 @@ const TenantList = () => {
     setIsLoading(true);
     try {
       const response = await axiosInstance.get(
-         `${API_ENDPOINTS.TENANT_PROVISION}`
+        `${API_BASE_TENANT_URL}${API_ENDPOINTS.TENANT_PROVISION}`
       );
       const data = response.data.results || [];
       const sortedTenants = [...data].sort((a, b) => b.id - a.id);
@@ -122,7 +122,7 @@ const TenantList = () => {
   const deleteTenant = () => {
     if (!tenantToDelete) return Promise.resolve();
     return axiosInstance
-      .delete(`${API_ENDPOINTS.TENANT_PROVISION}${tenantToDelete.id}/`)
+      .delete(`${API_BASE_TENANT_URL}${API_ENDPOINTS.TENANT_PROVISION}${tenantToDelete.id}/`)
       .then(() => {
         setTenants(tenants.filter((tenant) => tenant.id !== tenantToDelete.id));
         setFilteredTenants(filteredTenants.filter((tenant) => tenant.id !== tenantToDelete.id));
@@ -144,7 +144,7 @@ const TenantList = () => {
   const handleUpdateSubmit = async (data) => {
     try {
       await axiosInstance.patch(
-        `${API_ENDPOINTS.TENANT_PROVISION}${selectedTenant.id}/`,
+        `${API_BASE_TENANT_URL}${API_ENDPOINTS.TENANT_PROVISION}${selectedTenant.id}/`,
         data
       );
       fetchTenants();
