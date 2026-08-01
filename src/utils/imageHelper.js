@@ -16,8 +16,8 @@ export const getImageUrl = (image) => {
   // Build the tenant base URL (without /api), matching axiosInstance's pattern
   const baseUrl =
     schemaName && schemaName !== "public"
-      ? `https://${schemaName}.cafe.pootechnologies.tech`
-      : "https://cafe.pootechnologies.tech";
+      ? `https://${schemaName}.cafe-api.pootechnologies.tech`
+      : "https://cafe-api.pootechnologies.tech";
 
   // If the image is already a full URL, extract just the path portion
   if (image.startsWith("http://") || image.startsWith("https://")) {
