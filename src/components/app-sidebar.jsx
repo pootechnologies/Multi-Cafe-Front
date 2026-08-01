@@ -113,13 +113,12 @@ const data = {
       url: "#",
       icon: Building2,
       items: [
-        { title: "Add Tenant", url: "/add_tenant" },
+        // { title: "Add Tenant", url: "/add_tenant" },
         { title: "Tenant List", url: "/tenant_list" },
         { title: "Add Subscriptions", url: "/add_subscription" },
         { title: "Manage Subscriptions", url: "/manage_subscriptions" },
         { title: "Add Business Category", url: "/business_categories" },
         { title: "Manage Business Categories", url: "/manage_business_categories" },
-
       ],
 
     },
