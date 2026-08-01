@@ -31,9 +31,9 @@ const data = {
   },
   teams: [
     {
-      name: "Bati Café",
+      name: "Bati Cafe",
       logo: Coffee,
-      plan: "Premium Coffee Shop",
+      plan: "Premium Cafe Shop",
     },
   ],
   navMain: [
