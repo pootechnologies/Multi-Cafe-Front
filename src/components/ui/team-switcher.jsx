@@ -1,4 +1,4 @@
-import { ChevronsUpDown } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -7,12 +7,11 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import React from "react";
 
 export function TeamSwitcher({ teams }) {
-  const [activeTeam, setActiveTeam] = React.useState(teams[0]);
+  const [activeTeam] = React.useState(teams[0]);
 
   return (
     <SidebarMenu>
@@ -21,16 +20,21 @@ export function TeamSwitcher({ teams }) {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+              className="group hover:bg-transparent cursor-default"
             >
-              <div className="flex items-center justify-center bg-amber-600/10 dark:bg-amber-500/10 rounded-lg aspect-square size-10 text-sidebar-primary-foreground">
-                <activeTeam.logo className="size-6 text-amber-600 dark:text-amber-500" />
+              {/* Gradient logo badge — emerald */}
+              <div className="flex aspect-square size-9 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-md shadow-emerald-200 shrink-0">
+                <activeTeam.logo className="size-4" />
               </div>
-              <div className="grid flex-1 text-sm leading-tight text-left">
-                <span className="font-semibold truncate">
-                  Po'o Technologies
+
+              <div className="grid flex-1 text-left leading-tight">
+                <span className="truncate font-bold text-sm text-slate-800">
+                  {activeTeam.name}
                 </span>
-                <span className="text-xs truncate">Software Services</span>
+                <span className="flex items-center gap-1 truncate text-xs text-emerald-600 font-medium">
+                  <Sparkles className="w-2.5 h-2.5" />
+                  {activeTeam.plan}
+                </span>
               </div>
             </SidebarMenuButton>
           </DropdownMenuTrigger>
