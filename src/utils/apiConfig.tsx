@@ -1,8 +1,10 @@
 export const API_BASE_URL = "https://cafe-api.pootechnologies.tech/api";
 export const API_BASE_URL_LOGIN = "https://cafe-api.pootechnologies.tech/";
-export const IMAGE_BASE_URL = "https://cafe-api.pootechnologies.tech/";
+export const IMAGE_BASE_URL = "https://cafe-api.pootechnologies.tech/images/";
 export const API_BASE_RENDER_URL = "https://poo-drf.onrender.com/api";
 export const API_BASE_PROFILE = "https://cafe-api.pootechnologies.tech/auth";
+export const API_BASE_TENANT_URL = "https://cafe-api.pootechnologies.tech/";
+
 
 
 export const API_ENDPOINTS = {
@@ -11,14 +13,19 @@ export const API_ENDPOINTS = {
   TENANT_PROVISION: "tenants/provision-tenant/",
   TENANT_USERS: "tenant-users/",
   TENANT_GROUPS: "tenant/groups/",
+  TENANT_SUBSCRIPTIONS: "tenants/Subscription-plans/",
+  TENANT_SUBSCRIPTIONS_MANAGE: "tenants/Subscription-plans/",
+  TENANT_PAYMENT_CHECK: "chapa-initiate/",
+  TENANT_PAY: "chapa-initiate",
+  TENANT_BUSINESS_CATEGORIES: "tenants/business-categories/",
   REFRESH: "/token/refresh/",
-  PRODUCTS: "/products/",
+  PRODUCTS: "/products",
   PRODUCT_LOG: "/product_log/",
-  CATEGORIES: "/category/",
+  CATEGORIES: "/category",
   CUSTOMERS: "/customers",
   ORDERS: "/orders",
   CREDIT: "/orders-credit",
-  SUPPLIERS: "/suppliers/",
+  SUPPLIERS: "/suppliers",
   PROFILE: "/user/profile/",
   CHANGEPASSWORD: "/user/change_password/",
   ORDERITEMS: "/orderitems",
