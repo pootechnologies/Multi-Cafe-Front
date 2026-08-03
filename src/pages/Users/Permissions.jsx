@@ -49,24 +49,137 @@ const Permissions = () => {
     const [verb, ...resourceParts] = actionPart.split("_");
     const resource = resourceParts.length > 0 ? resourceParts.join(" ") : actionPart;
     
+    // Skip orderitem, orderpaymentlog, performaperforma, performaproduct, purchaseproduct, and purchasesupplier from display (they're handled automatically)
+    if (resource === "orderitem" || resource === "orderpaymentlog" || resource === "performaperforma" || resource === "performaproduct" || resource === "purchaseproduct" || resource === "purchasesupplier") return acc;
+    
     if (!acc[resource]) acc[resource] = [];
     acc[resource].push({ action: verb, fullPermission: permission });
     return acc;
   }, {});
 
+  // Format resource names with spaces for better display
+  const formatResourceName = (name) => {
+    // Store original for mapping lookup
+    const originalName = name;
+    
+    // Specific mappings for better readability
+    const mappings = {
+      'performacustomer': 'performa customer',
+      'performaperforma': 'performa forma',
+      'performaproduct': 'performa product',
+      'supplierpaymentlog': 'supplier payment log',
+      'otherexpenses': 'other expenses',
+      'orderpaymentlog': 'order payment log',
+      'orderlog': 'order log',
+      'orderitem': 'order item',
+      'purchaseexpense': 'purchase expense',
+      'purchaseproduct': 'purchase product',
+      'purchasesupplier': 'purchase supplier',
+      'customerinfo': 'customer info',
+      'companyinfo': 'company info',
+      'expensetypes': 'expense types',
+      'expensepaymentlog': 'expense payment log',
+      'productlog': 'product log',
+    };
+    
+    if (mappings[originalName]) {
+      return mappings[originalName];
+    }
+    
+    // Default formatting for other names
+    return name
+      .replace(/([a-z])([A-Z])/g, '$1 $2') // Add space before capital letters
+      .replace(/([a-z])(\d)/g, '$1 $2') // Add space before numbers
+      .replace(/(\d)([a-z])/g, '$1 $2') // Add space after numbers
+      .replace(/_/g, ' ') // Replace underscores with spaces
+      .replace(/\s+/g, ' ') // Replace multiple spaces with single space
+      .trim();
+  };
+
+  // Calculate displayed permissions count (excluding orderitem, orderpaymentlog, performaperforma, performaproduct, purchaseproduct, and purchasesupplier)
+  const displayedPermissions = Object.values(groupedPermissions).flat().length;
+
   const togglePerm = (fullPermission, checked) => {
-    setSelectedPermissions((prev) =>
-      checked ? [...prev, fullPermission] : prev.filter((p) => p !== fullPermission)
-    );
+    setSelectedPermissions((prev) => {
+      let newPerms = checked 
+        ? [...prev, fullPermission] 
+        : prev.filter((p) => p !== fullPermission);
+      
+      // Handle order -> orderitem, orderlog -> orderpaymentlog, performacustomer -> performaperforma/performaproduct, and purchaseexpense -> purchaseproduct/purchasesupplier relationships
+      const parts = fullPermission.split(".");
+      const actionPart = parts[1] || parts[0];
+      const [verb, ...resourceParts] = actionPart.split("_");
+      const resource = resourceParts.join(" ");
+      
+      if (resource === "order") {
+        const relatedPermission = `inventory.${verb}_orderitem`;
+        newPerms = checked
+          ? [...new Set([...newPerms, relatedPermission])]
+          : newPerms.filter((p) => p !== relatedPermission);
+      } else if (resource === "orderlog") {
+        const relatedPermission = `inventory.${verb}_orderpaymentlog`;
+        newPerms = checked
+          ? [...new Set([...newPerms, relatedPermission])]
+          : newPerms.filter((p) => p !== relatedPermission);
+      } else if (resource === "performacustomer") {
+        const relatedPerms = [
+          `inventory.${verb}_performaperforma`,
+          `inventory.${verb}_performaproduct`
+        ];
+        newPerms = checked
+          ? [...new Set([...newPerms, ...relatedPerms])]
+          : newPerms.filter((p) => !relatedPerms.includes(p));
+      } else if (resource === "purchaseexpense") {
+        const relatedPerms = [
+          `inventory.${verb}_purchaseproduct`,
+          `inventory.${verb}_purchasesupplier`
+        ];
+        newPerms = checked
+          ? [...new Set([...newPerms, ...relatedPerms])]
+          : newPerms.filter((p) => !relatedPerms.includes(p));
+      }
+      
+      return newPerms;
+    });
   };
 
   const toggleApp = (perms, checked) => {
-    const keys = perms.map((p) => p.fullPermission);
-    setSelectedPermissions((prev) =>
-      checked
+    setSelectedPermissions((prev) => {
+      const keys = perms.map((p) => p.fullPermission);
+      let newPerms = checked
         ? [...new Set([...prev, ...keys])]
-        : prev.filter((p) => !keys.includes(p))
-    );
+        : prev.filter((p) => !keys.includes(p));
+      
+      // Handle order -> orderitem, orderlog -> orderpaymentlog, performacustomer -> performaperforma/performaproduct, and purchaseexpense -> purchaseproduct/purchasesupplier relationships for group toggles
+      const resource = perms[0]?.fullPermission.split(".")[1]?.split("_").slice(1).join(" ");
+      if (resource === "order") {
+        // Add/remove corresponding orderitem permissions
+        const orderItemPerms = availablePermissions.filter(p => p.includes("orderitem"));
+        newPerms = checked
+          ? [...new Set([...newPerms, ...orderItemPerms])]
+          : newPerms.filter((p) => !p.includes("orderitem"));
+      } else if (resource === "orderlog") {
+        // Add/remove corresponding orderpaymentlog permissions
+        const orderPaymentLogPerms = availablePermissions.filter(p => p.includes("orderpaymentlog"));
+        newPerms = checked
+          ? [...new Set([...newPerms, ...orderPaymentLogPerms])]
+          : newPerms.filter((p) => !p.includes("orderpaymentlog"));
+      } else if (resource === "performacustomer") {
+        // Add/remove corresponding performaperforma and performaproduct permissions
+        const performaPerms = availablePermissions.filter(p => p.includes("performaperforma") || p.includes("performaproduct"));
+        newPerms = checked
+          ? [...new Set([...newPerms, ...performaPerms])]
+          : newPerms.filter((p) => !p.includes("performaperforma") && !p.includes("performaproduct"));
+      } else if (resource === "purchaseexpense") {
+        // Add/remove corresponding purchaseproduct and purchasesupplier permissions
+        const purchasePerms = availablePermissions.filter(p => p.includes("purchaseproduct") || p.includes("purchasesupplier"));
+        newPerms = checked
+          ? [...new Set([...newPerms, ...purchasePerms])]
+          : newPerms.filter((p) => !p.includes("purchaseproduct") && !p.includes("purchasesupplier"));
+      }
+      
+      return newPerms;
+    });
   };
 
   const selectOptions = groups.map((g) => ({
@@ -157,7 +270,7 @@ const Permissions = () => {
           <div className="flex flex-col sm:flex-row sm:items-center gap-4 w-full lg:w-auto">
             <div className="flex items-center justify-between sm:justify-start gap-4 w-full sm:w-auto">
               <span className="text-sm text-slate-500 dark:text-slate-400 shrink-0">
-                <span className="font-semibold text-emerald-600 dark:text-emerald-400">{selectedPermissions.length}</span> / {availablePermissions.length} selected
+                <span className="font-semibold text-emerald-600 dark:text-emerald-400">{selectedPermissions.length}</span> / {displayedPermissions} selected
               </span>
               <div className="flex items-center gap-2">
                 <button
@@ -278,7 +391,7 @@ const Permissions = () => {
                         className="sr-only"
                       />
                       <h4 className="font-bold text-slate-800 dark:text-slate-200 uppercase tracking-widest text-sm">
-                        {resource}
+                        {formatResourceName(resource)}
                       </h4>
                     </label>
                     <span className={`text-xs font-bold px-3 py-1 rounded-full border transition-colors ${selectedCount > 0 ? "bg-emerald-50 border-emerald-200 text-emerald-700 dark:bg-emerald-900/40 dark:border-emerald-800 dark:text-emerald-400" : "bg-slate-50 border-slate-200 text-slate-500 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400"}`}>
@@ -309,7 +422,7 @@ const Permissions = () => {
                             {isChecked && <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>}
                           </div>
                           <span className={`capitalize font-medium text-sm leading-tight transition-colors ${isChecked ? "text-emerald-800 dark:text-emerald-200" : "text-slate-600 dark:text-slate-400 group-hover/item:text-slate-900 dark:group-hover/item:text-slate-200"}`}>
-                            {action.replace(/_/g, " ")}
+                            {formatResourceName(action)}
                           </span>
                         </label>
                       );
