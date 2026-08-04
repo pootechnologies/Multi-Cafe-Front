@@ -53,8 +53,10 @@ const AddExpense = () => {
   const fetchExpenseTypes = async () => {
     try {
       const response = await axiosInstance.get(API_ENDPOINTS.EXPENSE_TYPE);
+      // Access the results array from the paginated response
+      const data = response.data.results || response.data;
       // Sort expense types by 'id' in descending order
-      const sortedExpenseTypes = response.data.sort((a, b) => b.id - a.id);
+      const sortedExpenseTypes = data.sort((a, b) => b.id - a.id);
       setExpenseTypes(sortedExpenseTypes);
     } catch (error) {
       console.error("Error fetching expense types:", error);
