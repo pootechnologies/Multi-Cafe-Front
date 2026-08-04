@@ -394,15 +394,9 @@ const ProductTable = ({
                         <span className="text-xs text-slate-500 dark:text-slate-400 font-medium block mb-1">{t("description")}</span>
                         <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">{product.description || "No description provided."}</p>
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="bg-slate-50/50 dark:bg-slate-950/50 rounded-xl p-3 border border-slate-100/50 dark:border-slate-800/50">
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase block mb-1">{t("supplier")}</span>
-                          <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{product.supplier_name || "N/A"}</span>
-                        </div>
-                        <div className="bg-slate-50/50 dark:bg-slate-950/50 rounded-xl p-3 border border-slate-100/50 dark:border-slate-800/50">
-                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase block mb-1">{t("created_by")}</span>
-                          <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{product.user}</span>
-                        </div>
+                      <div className="bg-slate-50/50 dark:bg-slate-950/50 rounded-xl p-3 border border-slate-100/50 dark:border-slate-800/50">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase block mb-1">{t("created_by")}</span>
+                        <span className="text-xs font-bold text-slate-900 dark:text-slate-100">{product.user}</span>
                       </div>
                     </div>
                   )}
