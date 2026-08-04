@@ -6,17 +6,13 @@ import { API_ENDPOINTS } from "@/utils/apiConfig";
 import { Button } from "@/components/ui/button";
 import { Plus, X, Upload } from "lucide-react";
 import AddCategoryModal from "./AddCategoryModal";
-import AddSupplierModal from "./AddSupplierModal";
 import { t } from "i18next";
 import axiosInstance from "@/utils/axiosInstance";
 
 const AddProduct = () => {
   const [categories, setCategories] = useState([]);
-  const [suppliers, setSuppliers] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(null);
-  const [selectedSupplier, setSelectedSupplier] = useState(null);
   const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-  const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [imagePreview, setImagePreview] = useState(null);
 
@@ -35,22 +31,7 @@ const AddProduct = () => {
         console.error("Error fetching categories:", error);
       }
     };
-    const fetchSuppliers = async () => {
-      try {
-        const response = await axiosInstance.get(API_ENDPOINTS.SUPPLIERS);
-        const data = Array.isArray(response?.data) ? response.data : (response?.data?.results || []);
-        setSuppliers(
-          data.map((supplier) => ({
-            id: supplier.id,
-            label: supplier.name,
-          }))
-        );
-      } catch (error) {
-        console.error("Error fetching suppliers:", error);
-      }
-    };
     fetchCategories();
-    fetchSuppliers();
   }, []);
 
   const {
@@ -99,7 +80,6 @@ const AddProduct = () => {
     }
     if (data.selling_price) formData.append("selling_price", data.selling_price);
     if (data.specification) formData.append("specification", data.specification);
-    if (selectedSupplier?.id) formData.append("supplier", selectedSupplier.id);
     if (data.stock) formData.append("stock", data.stock);
     if (data.image && data.image[0]) formData.append("image", data.image[0]);
     if (data.description) formData.append("description", data.description);
@@ -110,7 +90,6 @@ const AddProduct = () => {
       });
       reset();
       setSelectedCategory(null);
-      setSelectedSupplier(null);
       setImagePreview(null);
       toast.success("Product added successfully!");
     } catch (error) {
@@ -175,6 +154,15 @@ const AddProduct = () => {
                 value={selectedCategory}
                 onChange={(opt) => { setValue("category", opt?.id); setSelectedCategory(opt); }}
                 className="text-sm"
+                theme={(theme) => ({
+                  ...theme,
+                  colors: {
+                    ...theme.colors,
+                    primary: '#3b82f6',
+                    primary25: '#eff6ff',
+                    primary50: '#dbeafe',
+                  },
+                })}
                 styles={{
                   control: (base) => ({
                     ...base,
@@ -182,6 +170,16 @@ const AddProduct = () => {
                     padding: '2px',
                     borderColor: '#e2e8f0',
                     '&:hover': { borderColor: '#3b82f6' }
+                  }),
+                  option: (base, { isFocused, isSelected }) => ({
+                    ...base,
+                    backgroundColor: isSelected ? '#3b82f6' : isFocused ? '#eff6ff' : 'white',
+                    color: isSelected ? 'white' : '#1e293b',
+                    '&:active': { backgroundColor: '#3b82f6' }
+                  }),
+                  singleValue: (base) => ({
+                    ...base,
+                    color: '#1e293b'
                   })
                 }}
               />
@@ -242,31 +240,6 @@ const AddProduct = () => {
               />
             </div>
 
-            {/* Supplier */}
-            <div className="space-y-1.5">
-              <div className="flex justify-between items-center">
-                <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">{t("supplier")}</label>
-                <button type="button" onClick={() => setIsSupplierModalOpen(true)} className="text-xs font-bold text-blue-600 hover:text-blue-700 flex items-center gap-1">
-                  <Plus className="size-3" /> {t("new")}
-                </button>
-              </div>
-              <Select
-                isClearable
-                options={suppliers}
-                value={selectedSupplier}
-                onChange={(opt) => { setValue("supplier", opt?.id); setSelectedSupplier(opt); }}
-                className="text-sm"
-                styles={{
-                  control: (base) => ({
-                    ...base,
-                    borderRadius: '0.75rem',
-                    padding: '2px',
-                    borderColor: '#e2e8f0',
-                    '&:hover': { borderColor: '#3b82f6' }
-                  })
-                }}
-              />
-            </div>
 
             {/* Image Upload & Description */}
             <div className="md:col-span-2 space-y-1.5">
@@ -313,7 +286,7 @@ const AddProduct = () => {
             <Button
               type="button"
               variant="outline"
-              onClick={() => { reset(); setSelectedCategory(null); setSelectedSupplier(null); setImagePreview(null); }}
+              onClick={() => { reset(); setSelectedCategory(null); setImagePreview(null); }}
               className="px-6 rounded-xl"
             >
               {t("cancel")}
@@ -336,15 +309,6 @@ const AddProduct = () => {
           const resp = await axiosInstance.get(API_ENDPOINTS.CATEGORIES);
           const data = Array.isArray(resp?.data) ? resp.data : (resp?.data?.results || []);
           setCategories(data.map(c => ({ id: c.id, label: c.name })));
-        }}
-      />
-      <AddSupplierModal
-        isOpen={isSupplierModalOpen}
-        onClose={() => setIsSupplierModalOpen(false)}
-        onSupplierAdded={async () => {
-          const resp = await axiosInstance.get(API_ENDPOINTS.SUPPLIERS);
-          const data = Array.isArray(resp?.data) ? resp.data : (resp?.data?.results || []);
-          setSuppliers(data.map(s => ({ id: s.id, label: s.name })));
         }}
       />
     </div>
