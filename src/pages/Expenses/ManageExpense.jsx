@@ -45,8 +45,10 @@ const ManageExpense = () => {
   const fetchExpenses = async () => {
     try {
       const response = await axiosInstance.get(API_ENDPOINTS.OTHER_EXPENSE);
+      // Access the results array from the paginated response
+      const data = response.data.results || response.data;
       // Sort expenses by 'created_at' in descending order
-      const sortedExpenses = response.data.sort(
+      const sortedExpenses = data.sort(
         (a, b) => new Date(b.created_at) - new Date(a.created_at)
       );
       setExpenses(sortedExpenses);
@@ -141,7 +143,7 @@ const ManageExpense = () => {
 
   const filteredExpenses = expenses.filter((expense) => {
     const matchesSearch =
-      expense.expense_type
+      expense.expense
         ?.toLowerCase()
         ?.includes(searchQuery.toLowerCase()) ||
       expense.cost?.toString()?.includes(searchQuery);
@@ -205,7 +207,7 @@ const ManageExpense = () => {
   // Prepare rows for DataGrid
   const rows = displayExpenses.map((expense) => ({
     id: expense.id,
-    expense_type: expense.expense_type,
+    expense_type: expense.expense,
     cost: expense.cost,
     created_at: formatTimestamp(expense.created_at),
     user: expense.user,
@@ -231,7 +233,7 @@ const ManageExpense = () => {
           <div className="p-6 space-y-4 overflow-y-auto custom-scrollbar flex-1">
             <div className="bg-slate-50/50 dark:bg-slate-950/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
               <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider mb-1">{t("expense_type")}</p>
-              <p className="font-bold text-slate-900 dark:text-slate-100 text-lg">{expense.expense_type}</p>
+              <p className="font-bold text-slate-900 dark:text-slate-100 text-lg">{expense.expense}</p>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-slate-50/50 dark:bg-slate-950/50 rounded-xl p-4 border border-slate-100 dark:border-slate-800">
@@ -311,7 +313,7 @@ const ManageExpense = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700 dark:text-slate-300">{t("expense_type")}</label>
                 <div className="w-full h-12 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 px-4 flex items-center text-slate-500 dark:text-slate-400 font-medium">
-                  {expense?.expense_type}
+                  {expense?.expense}
                 </div>
               </div>
               <div className="space-y-2">
@@ -365,7 +367,7 @@ const ManageExpense = () => {
                 className="flex-1 sm:w-[180px] bg-transparent border-0 outline-none text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 h-8"
               />
             </div>
-            <select
+            {/* <select
               value={selectedExpenseType}
               onChange={handleExpenseTypeChange}
               className="h-12 rounded-xl bg-white/80 dark:bg-slate-900/50 backdrop-blur-xl border border-slate-200/60 dark:border-slate-800 px-4 text-sm font-medium text-slate-700 dark:text-slate-200 outline-none shadow-sm cursor-pointer hover:bg-white dark:hover:bg-slate-900 transition-colors"
@@ -374,7 +376,7 @@ const ManageExpense = () => {
               {expenseTypes.map((type) => (
                 <option key={type} value={type}>{type}</option>
               ))}
-            </select>
+            </select> */}
           </div>
         </div>
 
@@ -416,7 +418,7 @@ const ManageExpense = () => {
                           {expense.id}
                         </span>
                       </td>
-                      <td className="py-4"><span className="font-bold text-slate-900 dark:text-slate-100">{expense.expense_type}</span></td>
+                      <td className="py-4"><span className="font-bold text-slate-900 dark:text-slate-100">{expense.expense}</span></td>
                       <td className="py-4"><span className="font-bold text-emerald-600 dark:text-emerald-400">{formatCurrency(expense.cost)} ETB</span></td>
                       <td className="py-4">
                         <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm">
@@ -477,7 +479,7 @@ const ManageExpense = () => {
                     <Wallet className="h-6 w-6" />
                   </div>
                   <div>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider mb-0.5">{expense.expense_type}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider mb-0.5">{expense.expense}</p>
                     <p className="font-bold text-emerald-600 dark:text-emerald-400 text-xl leading-none">{formatCurrency(expense.cost)} ETB</p>
                   </div>
                 </div>
