@@ -1,5 +1,5 @@
 import React from "react";
-import { X, Package, Tag, Layers, User, Calendar, Hash, Globe, Info } from "lucide-react";
+import { X, Package, Tag, Layers, User, Calendar, Hash, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { t } from "i18next";
 import useUserRoleStore from "@/store/useUserRoleStore";
@@ -81,24 +81,13 @@ const Modal = ({ product, onClose }) => {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="flex items-center gap-3 px-2">
-              <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
-                <User className="h-4 w-4" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] text-slate-400 font-bold uppercase">{t("created_by")}</span>
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{product.user}</span>
-              </div>
+          <div className="flex items-center gap-3 px-2">
+            <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
+              <User className="h-4 w-4" />
             </div>
-            <div className="flex items-center gap-3 px-2">
-              <div className="h-8 w-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400">
-                <Globe className="h-4 w-4" />
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[10px] text-slate-400 font-bold uppercase">{t("supplier")}</span>
-                <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{product.supplier_name || "N/A"}</span>
-              </div>
+            <div className="flex flex-col">
+              <span className="text-[10px] text-slate-400 font-bold uppercase">{t("created_by")}</span>
+              <span className="text-xs font-bold text-slate-700 dark:text-slate-200">{product.user}</span>
             </div>
           </div>
         </div>
