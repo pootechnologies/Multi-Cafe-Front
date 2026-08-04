@@ -20,6 +20,7 @@ const ManageCategory = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
   const [expandedCards, setExpandedCards] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
@@ -115,6 +116,7 @@ const ManageCategory = () => {
 
   const deleteCategory = () => {
     if (!categoryToDelete) return;
+    setIsSubmitting(true);
     axiosInstance
       .delete(`${API_ENDPOINTS.CATEGORIES}${categoryToDelete.id}/`)
       .then(() => {
@@ -135,6 +137,9 @@ const ManageCategory = () => {
           error.response?.data?.error || "Failed to delete category!"
         );
         closeConfirmDelete();
+      })
+      .finally(() => {
+        setIsSubmitting(false);
       });
   };
 
@@ -148,6 +153,7 @@ const ManageCategory = () => {
       toast.error("Category name is required!");
       return;
     }
+    setIsSubmitting(true);
     try {
       await axiosInstance.patch(
         `${API_ENDPOINTS.CATEGORIES}${selectedCategory.id}/`,
@@ -161,6 +167,8 @@ const ManageCategory = () => {
     } catch (error) {
       console.error("There was an error updating the category name:", error);
       toast.error(error.response?.data?.error || "Failed to update category!");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -169,6 +177,7 @@ const ManageCategory = () => {
       toast.error("Category name is required!");
       return;
     }
+    setIsSubmitting(true);
     axiosInstance
       .post(
         `${API_ENDPOINTS.CATEGORIES}`,
@@ -177,17 +186,19 @@ const ManageCategory = () => {
         }
       )
       .then((response) => {
-        const newCategory = response.data;
-        setCategories([newCategory, ...categories]);
-        setFilteredCategories([newCategory, ...filteredCategories]);
         toast.success("Category created successfully!");
         reset();
+        setIsCreateModalOpen(false);
+        fetchCategories();
       })
       .catch((error) => {
         console.error("There was an error creating the category:", error);
         toast.error(
           error.response?.data?.error || "Failed to create category!"
         );
+      })
+      .finally(() => {
+        setIsSubmitting(false);
       });
   };
 
@@ -216,7 +227,7 @@ const ManageCategory = () => {
     );
   };
 
-  const ConfirmDeleteModal = ({ onConfirm, onCancel }) => (
+  const ConfirmDeleteModal = ({ onConfirm, onCancel, isSubmitting }) => (
     <div className="fixed inset-0 z-[100] flex items-start md:items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onCancel}>
       <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/60 dark:border-slate-800 overflow-hidden mt-20 md:mt-0" onClick={e => e.stopPropagation()}>
         <div className="p-6 border-b border-slate-100 dark:border-slate-800">
@@ -228,13 +239,13 @@ const ManageCategory = () => {
         <div className="p-6"><p className="text-slate-600 dark:text-slate-400">{t("sure_discription_category")}</p></div>
         <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end gap-3">
           <Button onClick={onCancel} className="rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 px-6">{t("cancel")}</Button>
-          <Button onClick={onConfirm} className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white px-6">{t("delete")}</Button>
+          <Button onClick={onConfirm} disabled={isSubmitting} className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white px-6 disabled:opacity-50 disabled:cursor-not-allowed">{isSubmitting ? "Deleting..." : t("delete")}</Button>
         </div>
       </div>
     </div>
   );
 
-  const UpdateModal = ({ onClose, onSubmit }) => {
+  const UpdateModal = ({ onClose, onSubmit, isSubmitting }) => {
     const [isEmpty, setIsEmpty] = useState(false);
     const handleInputChange = (e) => { setIsEmpty(e.target.value.trim() === ""); };
     return (
@@ -254,7 +265,7 @@ const ManageCategory = () => {
             </div>
             <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end gap-3">
               <Button type="button" onClick={onClose} className="rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 px-6">{t("cancel")}</Button>
-              <Button type="submit" className="rounded-xl bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 text-white px-6">{t("update")}</Button>
+              <Button type="submit" disabled={isSubmitting} className="rounded-xl bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 text-white px-6 disabled:opacity-50 disabled:cursor-not-allowed">{isSubmitting ? "Updating..." : t("update")}</Button>
             </div>
           </form>
         </div>
@@ -262,7 +273,7 @@ const ManageCategory = () => {
     );
   };
 
-  const CreateCategoryModal = ({ onClose, onSubmit }) => {
+  const CreateCategoryModal = ({ onClose, onSubmit, isSubmitting }) => {
     return (
       <div className="fixed inset-0 z-[100] flex items-start md:items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
         <div className="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/60 dark:border-slate-800 overflow-hidden flex flex-col mt-6 md:mt-0 max-h-[calc(100vh-180px)] md:max-h-[85vh]" onClick={e => e.stopPropagation()}>
@@ -280,7 +291,7 @@ const ManageCategory = () => {
             </div>
             <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end gap-3">
               <Button type="button" onClick={onClose} className="rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 px-6">Cancel</Button>
-              <Button type="submit" className="rounded-xl bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 text-white px-6">Create Category</Button>
+              <Button type="submit" disabled={isSubmitting} className="rounded-xl bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 text-white px-6 disabled:opacity-50 disabled:cursor-not-allowed">{isSubmitting ? "Creating..." : "Create Category"}</Button>
             </div>
           </form>
         </div>
@@ -505,13 +516,13 @@ const ManageCategory = () => {
         <Modal category={selectedCategory} onClose={closeModal} />
       )}
       {isConfirmDeleteOpen && (
-        <ConfirmDeleteModal onConfirm={deleteCategory} onCancel={closeConfirmDelete} />
+        <ConfirmDeleteModal onConfirm={deleteCategory} onCancel={closeConfirmDelete} isSubmitting={isSubmitting} />
       )}
       {isUpdateModalOpen && (
-        <UpdateModal onClose={() => setIsUpdateModalOpen(false)} onSubmit={handleUpdateSubmit} />
+        <UpdateModal onClose={() => setIsUpdateModalOpen(false)} onSubmit={handleUpdateSubmit} isSubmitting={isSubmitting} />
       )}
       {isCreateModalOpen && (
-        <CreateCategoryModal onClose={() => { setIsCreateModalOpen(false); reset(); }} onSubmit={handleCreateCategory} />
+        <CreateCategoryModal onClose={() => { setIsCreateModalOpen(false); reset(); }} onSubmit={handleCreateCategory} isSubmitting={isSubmitting} />
       )}
 
       {
