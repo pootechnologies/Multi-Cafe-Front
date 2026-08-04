@@ -21,7 +21,7 @@ export const API_ENDPOINTS = {
   REFRESH: "/token/refresh/",
   PRODUCTS: "/products",
   PRODUCT_LOG: "/product_log/",
-  CATEGORIES: "/category",
+  CATEGORIES: "/category/",
   CUSTOMERS: "/customers",
   ORDERS: "/orders",
   CREDIT: "/orders-credit",
