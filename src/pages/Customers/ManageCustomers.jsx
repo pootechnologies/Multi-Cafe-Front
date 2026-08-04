@@ -16,6 +16,9 @@ const ManageCustomer = () => {
   const [isUpdateModalOpen, setIsUpdateModalOpen] = useState(false);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const [customerToDelete, setCustomerToDelete] = useState(null);
+  const [isAdding, setIsAdding] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [page, setPage] = useState(1);
   const [isVisible, setIsVisible] = useState(false);
@@ -99,6 +102,7 @@ const ManageCustomer = () => {
 
   const deleteCustomer = async () => {
     if (!customerToDelete) return;
+    setIsDeleting(true);
     try {
       await axiosInstance.delete( // Replace axios with axiosInstance
         `${API_ENDPOINTS.CUSTOMERS}/${customerToDelete.id}`
@@ -110,6 +114,8 @@ const ManageCustomer = () => {
       console.error("Error deleting customer:", error);
       toast.error("Failed to delete customer!");
       closeConfirmDelete();
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -119,6 +125,7 @@ const ManageCustomer = () => {
   };
 
   const handleUpdateSubmit = async (data) => {
+    setIsUpdating(true);
     try {
       await axiosInstance.put( // Replace axios with axiosInstance
         `${API_ENDPOINTS.CUSTOMERS}/${selectedCustomer.id}`,
@@ -130,6 +137,8 @@ const ManageCustomer = () => {
     } catch (error) {
       console.error("Error updating customer:", error);
       toast.error("Failed to update customer!");
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -148,6 +157,7 @@ const ManageCustomer = () => {
   };
 
   const handleNewCustomerSubmit = async (data) => {
+    setIsAdding(true);
     try {
       const response = await axiosInstance.post( // Replace axios with axiosInstance
         `${API_ENDPOINTS.CUSTOMERS}`,
@@ -163,6 +173,8 @@ const ManageCustomer = () => {
     } catch (error) {
       console.error("Error adding customer:", error);
       toast.error("An error occurred while adding the customer.");
+    } finally {
+      setIsAdding(false);
     }
   };
 
@@ -212,7 +224,7 @@ const ManageCustomer = () => {
     );
   };
 
-  const CustomerModal = ({ isOpen, onClose, onSubmit }) => {
+  const CustomerModal = ({ isOpen, onClose, onSubmit, isLoading }) => {
     if (!isOpen) return null;
     const inputClass = "w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all";
     return (
@@ -261,8 +273,8 @@ const ManageCustomer = () => {
               </div>
             </div>
             <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end gap-3">
-              <Button type="button" onClick={onClose} className="rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 px-6">{t("cancel")}</Button>
-              <Button type="submit" className="rounded-xl bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 text-white px-6">{t("save")}</Button>
+              <Button type="button" onClick={onClose} disabled={isLoading} className="rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 px-6 disabled:opacity-50">{t("cancel")}</Button>
+              <Button type="submit" disabled={isLoading} className="rounded-xl bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 text-white px-6 disabled:opacity-50">{isLoading ? t("saving") : t("save")}</Button>
             </div>
           </form>
         </div>
@@ -270,7 +282,7 @@ const ManageCustomer = () => {
     );
   };
 
-  const ConfirmDeleteModal = ({ onConfirm, onCancel }) => (
+  const ConfirmDeleteModal = ({ onConfirm, onCancel, isLoading }) => (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onCancel}>
       <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-200/60 dark:border-slate-800 overflow-hidden" onClick={e => e.stopPropagation()}>
         <div className="p-6 border-b border-slate-100 dark:border-slate-800">
@@ -281,14 +293,14 @@ const ManageCustomer = () => {
         </div>
         <div className="p-6"><p className="text-slate-600 dark:text-slate-400">{t("sure_discription_customer")}</p></div>
         <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end gap-3">
-          <Button onClick={onCancel} className="rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 px-6">{t("cancel")}</Button>
-          <Button onClick={onConfirm} className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white px-6">{t("delete")}</Button>
+          <Button onClick={onCancel} disabled={isLoading} className="rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 px-6 disabled:opacity-50">{t("cancel")}</Button>
+          <Button onClick={onConfirm} disabled={isLoading} className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white px-6 disabled:opacity-50">{isLoading ? t("deleting") : t("delete")}</Button>
         </div>
       </div>
     </div>
   );
 
-  const UpdateModal = ({ onClose, onSubmit, defaultValues }) => {
+  const UpdateModal = ({ onClose, onSubmit, defaultValues, isLoading }) => {
     const {
       register,
       handleSubmit,
@@ -347,8 +359,8 @@ const ManageCustomer = () => {
               </div>
             </div>
             <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/50 flex justify-end gap-3">
-              <Button type="button" onClick={onClose} className="rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 px-6">{t("cancel")}</Button>
-              <Button type="submit" className="rounded-xl bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 text-white px-6">{t("update")}</Button>
+              <Button type="button" onClick={onClose} disabled={isLoading} className="rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-700 px-6 disabled:opacity-50">{t("cancel")}</Button>
+              <Button type="submit" disabled={isLoading} className="rounded-xl bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 text-white px-6 disabled:opacity-50">{isLoading ? t("updating") : t("update")}</Button>
             </div>
           </form>
         </div>
@@ -372,7 +384,7 @@ const ManageCustomer = () => {
               <Search className="h-4 w-4 text-slate-400 shrink-0" />
               <input type="search" placeholder={t("search_customers")} value={searchQuery} onChange={handleSearchChange} className="flex-1 sm:w-[180px] bg-transparent border-0 outline-none text-sm text-slate-700 dark:text-slate-200 placeholder:text-slate-400 h-8" />
             </div>
-            <Button onClick={openAddModal} className="bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-300 flex items-center gap-2 rounded-xl h-12 px-6 font-semibold">
+            <Button onClick={openAddModal} className="bg-slate-900 dark:bg-slate-100 dark:text-slate-900 hover:bg-slate-800 dark:hover:bg-slate-200 text-white shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all flex items-center gap-2 rounded-xl h-12 px-6 font-semibold">
               <Plus className="h-5 w-5" /> {t("add_customers")}
             </Button>
           </div>
@@ -515,10 +527,10 @@ const ManageCustomer = () => {
       </div>
 
       {/* Modals */}
-      <CustomerModal isOpen={isModalOpen} onClose={closeModal} onSubmit={handleNewCustomerSubmit} />
+      <CustomerModal isOpen={isModalOpen} onClose={closeModal} onSubmit={handleNewCustomerSubmit} isLoading={isAdding} />
       {isViewModalOpen && selectedCustomer && (<ViewModal customer={selectedCustomer} onClose={closeViewModal} />)}
-      {isConfirmDeleteOpen && (<ConfirmDeleteModal onConfirm={deleteCustomer} onCancel={closeConfirmDelete} />)}
-      {isUpdateModalOpen && (<UpdateModal onClose={() => setIsUpdateModalOpen(false)} onSubmit={handleUpdateSubmit} defaultValues={selectedCustomer} />)}
+      {isConfirmDeleteOpen && (<ConfirmDeleteModal onConfirm={deleteCustomer} onCancel={closeConfirmDelete} isLoading={isDeleting} />)}
+      {isUpdateModalOpen && (<UpdateModal onClose={() => setIsUpdateModalOpen(false)} onSubmit={handleUpdateSubmit} defaultValues={selectedCustomer} isLoading={isUpdating} />)}
 
       {isVisible && (
         <button
