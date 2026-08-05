@@ -10,6 +10,7 @@ import { API_ENDPOINTS } from '@/utils/apiConfig';
 import toast from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
 import { useQueryClient } from '@tanstack/react-query';
+import Select from 'react-select';
 
 const CartModal = () => {
   const queryClient = useQueryClient();
@@ -27,6 +28,8 @@ const CartModal = () => {
   const [submittedOrder, setSubmittedOrder] = useState(null);
   const [companyData, setCompanyData] = useState(null);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  const [waiters, setWaiters] = useState([]);
+  const [selectedWaiter, setSelectedWaiter] = useState(null);
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
@@ -46,9 +49,33 @@ const CartModal = () => {
     fetchCompanyData();
   }, []);
 
+  useEffect(() => {
+    const fetchWaiters = async () => {
+      try {
+        const response = await axiosInstance.get(API_ENDPOINTS.TENANT_USERS);
+        const data = response.data.results || response.data;
+        // Filter users with "Waiter" in tenant_groups
+        const waiterList = data.filter(user =>
+          user.tenant_groups && user.tenant_groups.includes("Waiter")
+        ).map(user => ({
+          id: user.id,
+          label: user.first_name && user.last_name
+            ? `${user.first_name} ${user.last_name}`
+            : user.email || user.phone_number || `User ${user.id}`,
+          email: user.email
+        }));
+        setWaiters(waiterList);
+      } catch (error) {
+        console.error("Error fetching waiters:", error);
+      }
+    };
+    fetchWaiters();
+  }, []);
+
   const handleProceedToCheckout = async () => {
     const order = {
       receipt: "No Receipt",
+      ordered_by: selectedWaiter?.label || null,
       items: cartItems.map(item => ({
         product: item.product.id,
         quantity: item.quantity
@@ -221,6 +248,34 @@ const CartModal = () => {
         {/* Footer */}
         {cartItems.length > 0 && (
           <div className="p-8 space-y-6 bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border-t border-slate-100 dark:border-slate-800">
+            {/* Waiter Selection */}
+            <div className="space-y-2">
+              <label className="text-sm font-semibold text-slate-700 dark:text-slate-300">Waiter</label>
+              <Select
+                isClearable
+                options={waiters}
+                value={selectedWaiter}
+                onChange={setSelectedWaiter}
+                placeholder="Select waiter..."
+                className="text-sm"
+                styles={{
+                  control: (base) => ({
+                    ...base,
+                    borderRadius: '0.75rem',
+                    padding: '2px',
+                    borderColor: '#e2e8f0',
+                    '&:hover': { borderColor: '#3b82f6' }
+                  }),
+                  option: (base, { isFocused, isSelected }) => ({
+                    ...base,
+                    backgroundColor: isSelected ? '#3b82f6' : isFocused ? '#eff6ff' : 'white',
+                    color: isSelected ? 'white' : '#1e293b',
+                    '&:active': { backgroundColor: '#3b82f6' }
+                  })
+                }}
+              />
+            </div>
+
             {/* Total */}
             <div className="flex items-center justify-between">
               <div className="space-y-1">
