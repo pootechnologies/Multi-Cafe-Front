@@ -22,7 +22,7 @@ export const API_ENDPOINTS = {
   PRODUCTS: "/products/",
   PRODUCT_LOG: "/product_log/",
   CATEGORIES: "/category/",
-  CUSTOMERS: "/customers",
+  CUSTOMERS: "/customers/",
   ORDERS: "/orders/",
   CREDIT: "/orders-credit",
   SUPPLIERS: "/suppliers",
