@@ -70,6 +70,8 @@ const ManageUsers = () => {
 
   useEffect(() => {
     if (selectedUser) {
+      setValue("first_name", selectedUser.first_name || "");
+      setValue("last_name", selectedUser.last_name || "");
       setValue("email", selectedUser.email);
     }
   }, [selectedUser, setValue]);
@@ -141,6 +143,8 @@ const ManageUsers = () => {
       await axiosInstance.patch(
         `${API_ENDPOINTS.TENANT_USERS}${selectedUser.id}/`,
         {
+          first_name: data.first_name || "",
+          last_name: data.last_name || "",
           email: data.email,
           groups: selectedGroup ? [selectedGroup.value] : [],
         }
@@ -165,6 +169,8 @@ const ManageUsers = () => {
     }
     axiosInstance
       .post(API_ENDPOINTS.TENANT_USERS, {
+        first_name: data.first_name || "",
+        last_name: data.last_name || "",
         email: data.email,
         username: data.email.split('@')[0],
         password: data.password,
@@ -276,6 +282,24 @@ const ManageUsers = () => {
           <form onSubmit={handleSubmit((data) => onSubmit(data, selectedGroup))} className="flex flex-col flex-1 min-h-0">
             <div className="p-6 overflow-y-auto custom-scrollbar space-y-4">
               <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">First Name</label>
+                <input
+                  type="text"
+                  {...register("first_name")}
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Last Name</label>
+                <input
+                  type="text"
+                  {...register("last_name")}
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all"
+                />
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Email Address</label>
                 <input
                   type="email"
@@ -355,6 +379,26 @@ const ManageUsers = () => {
           </div>
           <form onSubmit={handleSubmit((data) => onSubmit(data, selectedGroup))} className="flex flex-col flex-1 min-h-0">
             <div className="p-6 overflow-y-auto custom-scrollbar space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">First Name</label>
+                <input
+                  type="text"
+                  {...register("first_name")}
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all"
+                  placeholder="Enter first name"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Last Name</label>
+                <input
+                  type="text"
+                  {...register("last_name")}
+                  className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-3 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-blue-500/40 transition-all"
+                  placeholder="Enter last name"
+                />
+              </div>
+
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Email Address</label>
                 <input
@@ -486,6 +530,7 @@ const ManageUsers = () => {
               <thead className="bg-slate-50/80 dark:bg-slate-900/80 border-b border-slate-100/80 dark:border-slate-800">
                 <tr>
                   <th className="text-left font-semibold text-slate-600 dark:text-slate-400 h-14 pl-8 text-sm">ID</th>
+                  <th className="text-left font-semibold text-slate-600 dark:text-slate-400 h-14 text-sm">NAME</th>
                   <th className="text-left font-semibold text-slate-600 dark:text-slate-400 h-14 text-sm">EMAIL</th>
                   <th className="text-left font-semibold text-slate-600 dark:text-slate-400 h-14 text-sm">TENANT GROUPS</th>
                   <th className="text-right font-semibold text-slate-600 dark:text-slate-400 h-14 pr-8 text-sm">ACTIONS</th>
@@ -494,7 +539,7 @@ const ManageUsers = () => {
               <tbody>
                 {displayUsers.length === 0 ? (
                   <tr>
-                    <td colSpan={4} className="h-96">
+                    <td colSpan={5} className="h-96">
                       <div className="flex flex-col items-center justify-center text-center h-full space-y-4">
                         <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/30 text-blue-500 dark:text-blue-400 rounded-full flex items-center justify-center mb-2 shadow-sm border border-blue-100 dark:border-blue-900/50">
                           <User className="h-10 w-10 opacity-80" />
@@ -521,6 +566,14 @@ const ManageUsers = () => {
                           <Hash className="h-3.5 w-3.5 mr-1 text-slate-400" />
                           {user.id}
                         </span>
+                      </td>
+                      <td className="py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 group-hover:bg-white dark:group-hover:bg-slate-750 group-hover:border-blue-100 dark:group-hover:border-blue-900 group-hover:text-blue-600 transition-colors shadow-sm">
+                            <User className="h-4 w-4" />
+                          </div>
+                          <span className="font-semibold text-slate-900 dark:text-slate-100">{user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : user.email.split('@')[0]}</span>
+                        </div>
                       </td>
                       <td className="py-4">
                         <div className="flex items-center gap-3">
@@ -604,17 +657,25 @@ const ManageUsers = () => {
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
                     <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300 shadow-sm">
-                      <Mail className="h-6 w-6" />
+                      <User className="h-6 w-6" />
                     </div>
                     <div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider mb-0.5">Email</p>
-                      <p className="font-bold text-slate-900 dark:text-slate-100 text-base leading-none">{user.email}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider mb-0.5">Name</p>
+                      <p className="font-bold text-slate-900 dark:text-slate-100 text-base leading-none">{user.first_name && user.last_name ? `${user.first_name} ${user.last_name}` : user.email.split('@')[0]}</p>
                     </div>
                   </div>
                   <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-medium text-xs border border-slate-200/60 dark:border-slate-700/60 shadow-sm">
                     <Hash className="h-3 w-3 mr-1 text-slate-400" />
                     {user.id}
                   </span>
+                </div>
+
+                <div className="mb-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3 border border-slate-100 dark:border-slate-800/60">
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-1">Email</p>
+                  <p className="font-semibold text-slate-900 dark:text-slate-100 text-sm flex items-center gap-2">
+                    <Mail className="h-3.5 w-3.5 text-slate-400" />
+                    {user.email}
+                  </p>
                 </div>
 
                 <div className="mb-4 bg-slate-50 dark:bg-slate-800/40 rounded-xl p-3 border border-slate-100 dark:border-slate-800/60">
