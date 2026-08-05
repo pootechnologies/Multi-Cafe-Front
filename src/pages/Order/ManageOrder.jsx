@@ -1579,7 +1579,6 @@ function ManageOrder() {
     },
     { field: "paid_amount", headerName: t("paid_amount"), width: 130 },
     { field: "user", headerName: t("created_by"), width: 110 },
-    { field: "ordered_by", headerName: "Ordered By", width: 130 },
     {
       field: "status",
       headerName: t("status"),
@@ -1603,9 +1602,10 @@ function ManageOrder() {
           >
             {params.value}
           </span>
-        );
+          );
       },
     },
+    { field: "ordered_by", headerName: "Ordered By", width: 130 },
     {
       field: "actions",
       headerName: t("actions"),
@@ -1777,15 +1777,16 @@ function ManageOrder() {
                   {!isSimplifiedView && (
                     <th className="px-6 py-4 font-semibold text-slate-600 dark:text-slate-400 text-sm whitespace-nowrap">PAID AMOUNT</th>
                   )}
-                  <th className="px-6 py-4 font-semibold text-slate-600 dark:text-slate-400 text-sm whitespace-nowrap">STATUS</th>
-                  {!isSimplifiedView && <th className="px-6 py-4 font-semibold text-slate-600 dark:text-slate-400 text-sm whitespace-nowrap">CREATED BY</th>}
-                  <th className="px-6 py-4 font-semibold text-slate-600 dark:text-slate-400 text-sm text-right pr-8">ACTIONS</th>
+                   <th className="px-6 py-4 font-semibold text-slate-600 dark:text-slate-400 text-sm whitespace-nowrap">STATUS</th>
+                   {!isSimplifiedView && <th className="px-6 py-4 font-semibold text-slate-600 dark:text-slate-400 text-sm whitespace-nowrap">ORDERED BY</th>}
+                   {!isSimplifiedView && <th className="px-6 py-4 font-semibold text-slate-600 dark:text-slate-400 text-sm whitespace-nowrap">CREATED BY</th>}
+                   <th className="px-6 py-4 font-semibold text-slate-600 dark:text-slate-400 text-sm text-right pr-8">ACTIONS</th>
                 </tr>
               </thead>
               <tbody>
                 {isLoadingOrders ? (
                   <tr>
-                    <td colSpan={isSimplifiedView ? 8 : 14} className="h-96 text-center">
+                    <td colSpan={isSimplifiedView ? 8 : 15} className="h-96 text-center">
                       <div className="flex flex-col items-center justify-center space-y-4">
                         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900 dark:border-slate-100"></div>
                         <p className="text-slate-500 dark:text-slate-400">Loading orders...</p>
@@ -1794,7 +1795,7 @@ function ManageOrder() {
                   </tr>
                 ) : orders?.length === 0 ? (
                   <tr>
-                    <td colSpan={isSimplifiedView ? 8 : 14} className="h-96 text-center">
+                    <td colSpan={isSimplifiedView ? 8 : 15} className="h-96 text-center">
                       <div className="flex flex-col items-center justify-center space-y-4">
                         <div className="w-20 h-20 bg-slate-100 dark:bg-slate-800 rounded-full flex items-center justify-center">
                           <ShoppingCart className="h-10 w-10 text-slate-400" />
@@ -1863,6 +1864,11 @@ function ManageOrder() {
                           {order.status}
                         </span>
                       </td>
+                      {!isSimplifiedView && (
+                        <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
+                          {order.ordered_by || "N/A"}
+                        </td>
+                      )}
                       {!isSimplifiedView && (
                         <td className="px-6 py-4 text-sm text-slate-600 dark:text-slate-400 whitespace-nowrap">
                           {order.user}
