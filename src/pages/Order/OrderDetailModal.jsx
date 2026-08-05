@@ -69,6 +69,9 @@ const OrderDetailModal = ({
             <div>
               <h2 className="text-2xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">{t("order_details")}</h2>
               <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Order ID: <span className="text-slate-900 dark:text-slate-100 font-bold">#{selectedOrderId}</span></p>
+              {data?.data?.ordered_by && (
+                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Ordered by: <span className="text-slate-900 dark:text-slate-100 font-bold">{data.data.ordered_by}</span></p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3">
