@@ -1481,6 +1481,7 @@ function ManageOrder() {
   const simplifiedColumns = [
     { field: "id", headerName: t("id"), width: 100 },
     { field: "customer", headerName: t("customer_name"), width: 130 },
+    { field: "ordered_by", headerName: "Ordered By", width: 130 },
     { field: "order_date", headerName: t("order_date"), width: 110 },
     { field: "total_amount", headerName: t("total_amount"), width: 130 },
 
@@ -1577,6 +1578,8 @@ function ManageOrder() {
       },
     },
     { field: "paid_amount", headerName: t("paid_amount"), width: 130 },
+    { field: "user", headerName: t("created_by"), width: 110 },
+    { field: "ordered_by", headerName: "Ordered By", width: 130 },
     {
       field: "status",
       headerName: t("status"),
@@ -1586,8 +1589,8 @@ function ManageOrder() {
           params.value === "Pending"
             ? "orange"
             : params.value === "Done"
-              ? "green"
-              : "red";
+            ? "green"
+            : "red";
         return (
           <span
             style={{
@@ -1595,22 +1598,14 @@ function ManageOrder() {
               color: "white",
               padding: "4px 4px",
               borderRadius: "4px",
-              minWidth: "100%",
-              height: 40,
+              fontWeight: "bold",
             }}
           >
-            {params.value
-              ? params.value === "Done" &&
-                params.row.actions.item_pending !== null &&
-                params.row.actions.item_pending !== 0
-                ? `${params.value} `
-                : params.value
-              : ""}
+            {params.value}
           </span>
         );
       },
     },
-    { field: "user", headerName: t("created_by"), width: 110 },
     {
       field: "actions",
       headerName: t("actions"),
@@ -1650,6 +1645,7 @@ function ManageOrder() {
   const rows = orders?.map((order) => ({
     id: order.id,
     customer: order.customer_name || "N/A",
+    ordered_by: order.ordered_by || "N/A",
     order_date: formatTimestamp(order.order_date),
     receipt: order.receipt,
     sub_total: order.sub_total, // Use the exact value from API
@@ -1973,6 +1969,7 @@ function ManageOrder() {
                     <div>
                       <p className="text-xs text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mb-0.5">Order #{order.id}</p>
                       <p className="font-extrabold text-slate-900 dark:text-slate-100 text-lg leading-none">{order.customer_name || "N/A"}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-1">Ordered by: {order.ordered_by || "N/A"}</p>
                     </div>
                   </div>
                   <DropdownMenu>
